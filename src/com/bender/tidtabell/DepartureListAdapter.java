@@ -16,13 +16,19 @@ public class DepartureListAdapter extends BaseAdapter
 {
 	private Context mContext;
 	private Vector<Departure> mDepartures;
+
+	public DepartureListAdapter(Context context)
+	{
+		mContext = context;
+		mDepartures = new Vector<Departure>();
+	}
 	
 	DepartureListAdapter(Context context, Vector<Departure> departures)
 	{
 		mContext = context;
 		mDepartures = departures;
 	}
-	
+
 	@Override
 	public int getCount()
 	{
@@ -59,6 +65,12 @@ public class DepartureListAdapter extends BaseAdapter
 		dli.setTime(departure.getTime());
 
 		return dli;
+	}
+	
+	public void updateData(Vector<Departure> departures)
+	{
+		mDepartures = departures;
+		notifyDataSetChanged();
 	}
 
 	public class DepartureListItem extends RelativeLayout

@@ -6,6 +6,7 @@ import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,63 +18,83 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import android.app.Dialog;
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class Tidtabell extends ListActivity
 {
-	@Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-		try {
-	    	URL url = new URL("http://vasttrafik.se/External_Services/NextTrip.asmx/" +
-					"GetForecast" +
-					"?identifier=1d1b034c%2db4cc%2d49ec%2da69e%2d70b91f5fb325" +
-					"&stopId=00007171");
+	static final int PROGRESS_DIALOG = 0;
+	private FetchXmlThread fetchXmlThread;
+	private ProgressDialog mProgressDialog;
+	private DepartureListAdapter mListAdapter;
+	private Vector<Departure> mDepartures;
 
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        	
-            StringReader sr = getXmlData(connection.getInputStream());
-            
-            SAXParserFactory saxFactory = SAXParserFactory.newInstance();
-            SAXParser saxParser = saxFactory.newSAXParser();
-            NextTripHandler nth = new NextTripHandler();
-            saxParser.parse(new InputSource(sr), nth);
-            
-//            Vector<Departure> departureList = nth.getDepartureList();
-//            if (departureList.size() > 0) {
-//	            departureList.get(0);
-//	            TextView tv = (TextView) findViewById(R.id.hello);
-//	            tv.setText(departureList.get(0).getDestination());
-//            }
-            
-            DepartureListAdapter listAdapter = new DepartureListAdapter(getBaseContext(), nth.getDepartureList());
-            setListAdapter(listAdapter);
-            
-		} catch (MalformedURLException e) {
-			Log.e("Tidtabell", e.toString());
-		} catch (IOException e) {
-			Log.e("Tidtabell", e.toString());
-		} catch (ParserConfigurationException e) {
-			Log.e("Tidtabell", e.toString());
-		} catch (SAXException e) {
-			Log.e("Tidtabell", e.toString());
+	@Override
+	protected void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+
+		mListAdapter = new DepartureListAdapter(getBaseContext());
+		setListAdapter(mListAdapter);
+		
+		//
+		mProgressDialog = ProgressDialog.show(this, "", "Laddar...", true, true);
+		fetchXmlThread = new FetchXmlThread(handler);
+		fetchXmlThread.start();
+	}
+
+	final Handler handler = new Handler() {
+		@SuppressWarnings("unused")
+		public void handleMessage(Message msg)
+		{
+			String xml = msg.getData().getString("xml");
+			mProgressDialog.dismiss();
+			
+			try
+			{
+				Vector<Departure> mDepartures = parseXml(xml);
+				mListAdapter.updateData(mDepartures);
+			}
+			catch (MalformedURLException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+			catch (IOException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+			catch (ParserConfigurationException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+			catch (SAXException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
 		}
-    }
-    
-    @Override
-    protected void onSaveInstanceState(Bundle outState)
-    {
-    	super.onSaveInstanceState(outState);
-    }
-    
-    private StringReader getXmlData(InputStream is) throws ParserConfigurationException, IOException, SAXException {
-    	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    	DocumentBuilder db = dbf.newDocumentBuilder();
-    	Document doc = db.parse(is);
-    	
-    	return new StringReader(doc.getDocumentElement().getTextContent());
-    }
+	};
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState)
+	{
+		super.onSaveInstanceState(outState);
+	}
+
+	private Vector<Departure> parseXml(String xml)
+	        throws ParserConfigurationException, SAXException, IOException
+	{
+		SAXParserFactory saxFactory = SAXParserFactory.newInstance();
+		SAXParser saxParser = saxFactory.newSAXParser();
+		NextTripHandler nth = new NextTripHandler();
+		
+		StringReader sr = new StringReader(xml);
+		saxParser.parse(new InputSource(sr), nth);
+
+		return nth.getDepartureList();
+	}
 }
