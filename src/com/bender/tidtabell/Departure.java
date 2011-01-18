@@ -1,6 +1,5 @@
 package com.bender.tidtabell;
 
-import java.io.Serializable;
 import java.util.GregorianCalendar;
 
 public class Departure
@@ -10,10 +9,6 @@ public class Departure
 	private int[] mLineBackgroundColor = { 0, 0, 0, 0 };
 	private String mDestination;
 	private GregorianCalendar mTime;
-
-	public Departure()
-	{
-	}
 
 	public void setLine(String line)
 	{
