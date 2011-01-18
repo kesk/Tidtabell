@@ -1,7 +1,5 @@
 package com.bender.tidtabell;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Vector;
 
@@ -12,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.RelativeLayout;
-import android.widget.TableLayout;
 import android.widget.TextView;
 
 public class DepartureListAdapter extends BaseAdapter
@@ -99,7 +96,6 @@ public class DepartureListAdapter extends BaseAdapter
 		
 		public void setTime(GregorianCalendar time)
 		{
-			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM hh:mm:ss");
 			GregorianCalendar now = new GregorianCalendar();
 			long diff = time.getTimeInMillis() - now.getTimeInMillis();
 			

@@ -1,15 +1,11 @@
 package com.bender.tidtabell;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -21,15 +17,9 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import android.app.Activity;
 import android.app.ListActivity;
-import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.sax.Element;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 
 public class Tidtabell extends ListActivity
 {
