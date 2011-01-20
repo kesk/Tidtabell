@@ -11,7 +11,7 @@
             </intent-filter>
         </activity>
 
-    <activity android:name=".NextTrip"></activity>asdrasdfasdf
+    <activity android:name=".NextTrip"></activity>
 </application>
 
 <uses-permission android:name="android.permission.INTERNET"></uses-permission>
