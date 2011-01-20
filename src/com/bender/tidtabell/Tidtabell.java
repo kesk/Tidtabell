@@ -9,6 +9,8 @@ import android.widget.Button;
 
 public class Tidtabell extends Activity
 {
+	public static final String IDENTIFIER = "1d1b034c-b4cc-49ec-a69e-70b91f5fb325";
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{

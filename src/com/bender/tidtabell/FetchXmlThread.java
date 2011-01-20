@@ -20,30 +20,45 @@ import android.util.Log;
 
 public class FetchXmlThread extends Thread
 {
+	public static final int NEXT_TRIP = 0;
 	private Handler mHandler;
+	private URL mUrl;
 
-	public FetchXmlThread(Handler handler)
+	public FetchXmlThread(Handler handler, int service, String identifier,
+	        String stopId) throws MalformedURLException
 	{
 		this.mHandler = handler;
+
+		StringBuilder s = new StringBuilder();
+		s.append("http://vasttrafik.se/External_Services/");
+
+		switch (service)
+		{
+		case NEXT_TRIP:
+			s.append("NextTrip.asmx/GetForecast");
+			break;
+		}
+
+		s.append("?identifier=");
+		s.append(identifier);
+
+		s.append("&stopId=");
+		s.append(stopId);
+
+		this.mUrl = new URL(s.toString());
 	}
 
 	public void run()
 	{
 		Message msg = mHandler.obtainMessage();
-		
+
 		try
 		{
-			URL url = new URL(
-			        "http://vasttrafik.se/External_Services/"
-			                + "NextTrip.asmx/GetForecast"
-			                + "?identifier=1d1b034c-b4cc-49ec-a69e-70b91f5fb325"
-			                + "&stopId=00007171");
-
-			HttpURLConnection connection = (HttpURLConnection) url
+			HttpURLConnection connection = (HttpURLConnection) mUrl
 			        .openConnection();
 
 			String s = getXmlData(connection.getInputStream());
-			
+
 			Bundle b = new Bundle();
 			b.putString("xml", s);
 			msg.setData(b);
@@ -64,7 +79,7 @@ public class FetchXmlThread extends Thread
 		{
 			Log.e("Tidtabell", e.toString());
 		}
-		
+
 		mHandler.sendMessage(msg);
 	}
 

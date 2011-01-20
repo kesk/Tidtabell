@@ -12,6 +12,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.os.Bundle;
@@ -21,10 +22,14 @@ import android.util.Log;
 
 public class NextTrip extends ListActivity
 {
+	public static final int 
+		ERROR_DIALOG = 0,
+		PROGRESS_DIALOG = 1;
+	
 	private FetchXmlThread mFetchXmlThread;
 	private ProgressDialog mProgressDialog;
 	private DepartureListAdapter mListAdapter;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -32,18 +37,18 @@ public class NextTrip extends ListActivity
 
 		mListAdapter = new DepartureListAdapter(getBaseContext());
 		setListAdapter(mListAdapter);
-		
-		//Message handler for the FetchXml thread
+
+		// Message handler for the FetchXml thread
 		Handler handler = new Handler() {
 			public void handleMessage(Message msg)
 			{
 				String xml = msg.getData().getString("xml");
 				mProgressDialog.dismiss();
-				
+
 				try
 				{
-					Vector<Departure> mDepartures = parseXml(xml);
-					mListAdapter.updateData(mDepartures);
+					Vector<Departure> departures = parseXml(xml);
+					mListAdapter.updateData(departures);
 				}
 				catch (MalformedURLException e)
 				{
@@ -64,10 +69,33 @@ public class NextTrip extends ListActivity
 			}
 		};
 
-		//Get next trip times from Västtrafik
-		mProgressDialog = ProgressDialog.show(this, "", "Laddar...", true, true);
-		mFetchXmlThread = new FetchXmlThread(handler);
-		mFetchXmlThread.start();
+		// Get next trip times from Västtrafik
+		showDialog(PROGRESS_DIALOG);
+		try
+		{
+			mFetchXmlThread = new FetchXmlThread(handler,
+			        FetchXmlThread.NEXT_TRIP, Tidtabell.IDENTIFIER, "00007171");
+			mFetchXmlThread.start();
+		}
+		catch (MalformedURLException e)
+		{
+			Log.e("Tidtabell", e.toString());
+		}
+	}
+	
+	@Override
+	protected Dialog onCreateDialog(int id)
+	{
+		switch (id)
+		{
+		case PROGRESS_DIALOG:
+			mProgressDialog = new ProgressDialog(this);
+			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			mProgressDialog.setMessage(getString(R.string.loading_dialog));
+			return mProgressDialog;
+		default:
+			return null;
+		}
 	}
 
 	@Override
@@ -82,7 +110,7 @@ public class NextTrip extends ListActivity
 		SAXParserFactory saxFactory = SAXParserFactory.newInstance();
 		SAXParser saxParser = saxFactory.newSAXParser();
 		NextTripHandler nth = new NextTripHandler();
-		
+
 		StringReader sr = new StringReader(xml);
 		saxParser.parse(new InputSource(sr), nth);
 

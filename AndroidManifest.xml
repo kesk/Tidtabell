@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.bender.tidtabell"
-      android:versionCode="8"
-      android:versionName="2.2">
+      package="com.bender.tidtabell">
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
-        <activity android:name=".Tidtabell"
-                  android:label="@string/app_name"
-                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity android:name=".NextTrip"
+                  android:label="@string/app_name">
                   
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -14,9 +11,8 @@
             </intent-filter>
         </activity>
 
-    <activity android:name=".NextTrip"></activity>
+    <!--<activity android:name=".NextTrip"></activity>-->
 </application>
-
 
 <uses-permission android:name="android.permission.INTERNET"></uses-permission>
 </manifest> 
