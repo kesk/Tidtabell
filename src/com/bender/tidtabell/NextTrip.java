@@ -22,10 +22,8 @@ import android.util.Log;
 
 public class NextTrip extends ListActivity
 {
-	public static final int 
-		ERROR_DIALOG = 0,
-		PROGRESS_DIALOG = 1;
-	
+	public static final int ERROR_DIALOG = 0, PROGRESS_DIALOG = 1;
+
 	private FetchXmlThread mFetchXmlThread;
 	private ProgressDialog mProgressDialog;
 	private DepartureListAdapter mListAdapter;
@@ -43,6 +41,7 @@ public class NextTrip extends ListActivity
 			public void handleMessage(Message msg)
 			{
 				String xml = msg.getData().getString("xml");
+				//dismissDialog(PROGRESS_DIALOG);
 				mProgressDialog.dismiss();
 
 				try
@@ -70,7 +69,10 @@ public class NextTrip extends ListActivity
 		};
 
 		// Get next trip times from Västtrafik
-		showDialog(PROGRESS_DIALOG);
+		// showDialog(PROGRESS_DIALOG);
+		mProgressDialog = ProgressDialog.show(this, "",
+		        "Loading. Please wait...", true);
+		
 		try
 		{
 			mFetchXmlThread = new FetchXmlThread(handler,
@@ -82,7 +84,7 @@ public class NextTrip extends ListActivity
 			Log.e("Tidtabell", e.toString());
 		}
 	}
-	
+
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
@@ -103,7 +105,7 @@ public class NextTrip extends ListActivity
 	{
 		super.onSaveInstanceState(outState);
 	}
-	
+
 	@Override
 	protected void onDestroy()
 	{
