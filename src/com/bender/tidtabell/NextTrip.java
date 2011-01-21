@@ -103,6 +103,14 @@ public class NextTrip extends ListActivity
 	{
 		super.onSaveInstanceState(outState);
 	}
+	
+	@Override
+	protected void onDestroy()
+	{
+		super.onDestroy();
+		mFetchXmlThread.stop();
+		mFetchXmlThread = null;
+	}
 
 	private Vector<Departure> parseXml(String xml)
 	        throws ParserConfigurationException, SAXException, IOException

@@ -12,7 +12,7 @@ public class Tidtabell extends Activity
 	public static final String IDENTIFIER = "1d1b034c-b4cc-49ec-a69e-70b91f5fb325";
 	
 	@Override
-	protected void onCreate(Bundle savedInstanceState)
+	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
@@ -24,6 +24,16 @@ public class Tidtabell extends Activity
 			public void onClick(View v)
 			{
 				Intent i = new Intent(getBaseContext(), NextTrip.class);
+				startActivity(i);
+			}
+		});
+		
+		Button b2 = (Button) findViewById(R.id.search_button);
+		b2.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v)
+			{
+				Intent i = new Intent(getBaseContext(), StopSearch.class);
 				startActivity(i);
 			}
 		});

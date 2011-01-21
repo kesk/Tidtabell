@@ -4,4 +4,5 @@
     <string name="app_name">Tidtabell</string>
 <string name="ok">Ok</string>
 <string name="loading_dialog">Laddar...</string>
+<string name="search_hint">Hållplats</string>
 </resources>
