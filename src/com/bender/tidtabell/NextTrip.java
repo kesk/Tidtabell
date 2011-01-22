@@ -2,7 +2,9 @@ package com.bender.tidtabell;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Vector;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -12,19 +14,20 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 public class NextTrip extends ListActivity
 {
 	public static final int ERROR_DIALOG = 0, PROGRESS_DIALOG = 1;
 
-	private FetchXmlThread mFetchXmlThread;
 	private ProgressDialog mProgressDialog;
 	private DepartureListAdapter mListAdapter;
 
@@ -32,56 +35,46 @@ public class NextTrip extends ListActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-
-		mListAdapter = new DepartureListAdapter(getBaseContext());
+		mListAdapter = new DepartureListAdapter(this);
 		setListAdapter(mListAdapter);
 
-		// Message handler for the FetchXml thread
-		Handler handler = new Handler() {
-			public void handleMessage(Message msg)
-			{
-				String xml = msg.getData().getString("xml");
-				//dismissDialog(PROGRESS_DIALOG);
-				mProgressDialog.dismiss();
+		SharedPreferences prefs = getPreferences(Activity.MODE_PRIVATE);
 
-				try
-				{
-					Vector<Departure> departures = parseXml(xml);
-					mListAdapter.updateData(departures);
-				}
-				catch (MalformedURLException e)
-				{
-					Log.e("Tidtabell", e.toString());
-				}
-				catch (IOException e)
-				{
-					Log.e("Tidtabell", e.toString());
-				}
-				catch (ParserConfigurationException e)
-				{
-					Log.e("Tidtabell", e.toString());
-				}
-				catch (SAXException e)
-				{
-					Log.e("Tidtabell", e.toString());
-				}
-			}
-		};
+		Bundle b = getIntent().getExtras();
+		String stopId;
+		String stopName;
 
-		// Get next trip times from Västtrafik
-		// showDialog(PROGRESS_DIALOG);
-		mProgressDialog = ProgressDialog.show(this, "",
-		        "Loading. Please wait...", true);
-		
-		try
+		// Either show the stopId in the intent or last used stopId
+		if (b != null)
 		{
-			mFetchXmlThread = new FetchXmlThread(handler,
-			        FetchXmlThread.NEXT_TRIP, Tidtabell.IDENTIFIER, "00007171");
-			mFetchXmlThread.start();
+			stopId = b.getString("stopId");
+			stopName = b.getString("stopName");
+
+			// Update last used stopId
+			Editor editor = prefs.edit();
+			editor.putString("stopId", stopId);
+			editor.putString("stopName", stopName);
 		}
-		catch (MalformedURLException e)
+		else
 		{
-			Log.e("Tidtabell", e.toString());
+			stopId = prefs.getString("stopId", null);
+			stopName = prefs.getString("stopName", null);
+		}
+
+		if (stopId != null)
+		{
+			StringBuilder s = new StringBuilder();
+			s.append("http://vasttrafik.se/External_Services/");
+
+			s.append("NextTrip.asmx/GetForecast");
+
+			s.append("?identifier=");
+			s.append(Tidtabell.IDENTIFIER);
+
+			s.append("&stopId=");
+			s.append(stopId);
+
+			new NextTripQueryTask().execute(s.toString());
 		}
 	}
 
@@ -106,24 +99,68 @@ public class NextTrip extends ListActivity
 		super.onSaveInstanceState(outState);
 	}
 
-	@Override
-	protected void onDestroy()
+	private class NextTripQueryTask extends
+	        AsyncTask<String, Void, Vector<Departure>>
 	{
-		super.onDestroy();
-		mFetchXmlThread.stop();
-		mFetchXmlThread = null;
-	}
+		@Override
+		protected void onPreExecute()
+		{
+			// Show "loading" dialog
+			mProgressDialog = ProgressDialog.show(NextTrip.this, "",
+			        "Loading. Please wait...", true);
+		}
 
-	private Vector<Departure> parseXml(String xml)
-	        throws ParserConfigurationException, SAXException, IOException
-	{
-		SAXParserFactory saxFactory = SAXParserFactory.newInstance();
-		SAXParser saxParser = saxFactory.newSAXParser();
-		NextTripHandler nth = new NextTripHandler();
+		@Override
+		protected Vector<Departure> doInBackground(String... params)
+		{
+			Vector<Departure> departures = null;
 
-		StringReader sr = new StringReader(xml);
-		saxParser.parse(new InputSource(sr), nth);
+			try
+			{
+				URL url = new URL(params[0]);
+				HttpURLConnection connection = (HttpURLConnection) url
+				        .openConnection();
 
-		return nth.getDepartureList();
+				String xml = Tidtabell.getXmlData(connection.getInputStream());
+				
+				// Parse the xml
+				SAXParserFactory saxFactory = SAXParserFactory.newInstance();
+				SAXParser saxParser = saxFactory.newSAXParser();
+				NextTripHandler handler = new NextTripHandler();
+				StringReader sr = new StringReader(xml);
+				saxParser.parse(new InputSource(sr), handler);
+				
+				// Get the result from the parse
+				departures = handler.getDepartureList();
+			}
+			catch (MalformedURLException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+			catch (IOException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+			catch (ParserConfigurationException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+			catch (SAXException e)
+			{
+				Log.e("Tidtabell", e.toString());
+			}
+
+			return departures;
+		}
+
+		@Override
+		protected void onPostExecute(Vector<Departure> result)
+		{
+			// Dismiss "loading" dialog
+			mProgressDialog.dismiss();
+
+			// Update the list y0!
+			mListAdapter.updateData(result);
+		}
 	}
 }

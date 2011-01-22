@@ -8,7 +8,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class NextTripHandler extends DefaultHandler implements Response
+public class NextTripHandler extends DefaultHandler
 {
 	
 	boolean inItem = false;
@@ -73,7 +73,7 @@ public class NextTripHandler extends DefaultHandler implements Response
 	public void characters(char ch[], int start, int length) 
 		throws SAXException
 	{
-		if (inDestination)
+		if (inItem && inDestination)
 			currentDeparture.setDestination(new String(ch, start, length));
 	}
 	
@@ -105,17 +105,5 @@ public class NextTripHandler extends DefaultHandler implements Response
 		time[5] = Integer.parseInt(s.substring(17, 19));
 		
 		return time;
-	}
-
-	@Override
-	public String errorMessage()
-	{
-		return null;
-	}
-
-	@Override
-	public boolean success()
-	{
-		return true;
 	}
 }
