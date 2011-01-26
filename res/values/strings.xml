@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, Tidtabell!</string>
+    
     <string name="app_name">Tidtabell</string>
 <string name="ok">Ok</string>
 <string name="loading_dialog">Laddar...</string>
-<string name="search_hint">Hållplats</string>
+<string name="search_hint">Namn på hållplats</string>
+<string name="menu_stop_search">Sök hållplats</string>
+<string name="main_saved_stations">Sparade stationer</string>
 </resources>

@@ -14,15 +14,16 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.TextView;
 
 public class NextTrip extends ListActivity
 {
@@ -37,32 +38,20 @@ public class NextTrip extends ListActivity
 		super.onCreate(savedInstanceState);
 		mListAdapter = new DepartureListAdapter(this);
 		setListAdapter(mListAdapter);
-
-		SharedPreferences prefs = getPreferences(Activity.MODE_PRIVATE);
+		setContentView(R.layout.next_trip);
 
 		Bundle b = getIntent().getExtras();
 		String stopId;
 		String stopName;
 
-		// Either show the stopId in the intent or last used stopId
 		if (b != null)
 		{
 			stopId = b.getString("stopId");
 			stopName = b.getString("stopName");
 
-			// Update last used stopId
-			Editor editor = prefs.edit();
-			editor.putString("stopId", stopId);
-			editor.putString("stopName", stopName);
-		}
-		else
-		{
-			stopId = prefs.getString("stopId", null);
-			stopName = prefs.getString("stopName", null);
-		}
+			TextView tv = (TextView) findViewById(R.id.next_trip_header);
+			tv.setText(stopName);
 
-		if (stopId != null)
-		{
 			StringBuilder s = new StringBuilder();
 			s.append("http://vasttrafik.se/External_Services/");
 
@@ -94,6 +83,21 @@ public class NextTrip extends ListActivity
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.tidtabell, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		return Tidtabell.menuItemSelectHandler(this, item)
+		        || super.onOptionsItemSelected(item);
+	}
+
+	@Override
 	protected void onSaveInstanceState(Bundle outState)
 	{
 		super.onSaveInstanceState(outState);
@@ -122,14 +126,14 @@ public class NextTrip extends ListActivity
 				        .openConnection();
 
 				String xml = Tidtabell.getXmlData(connection.getInputStream());
-				
+
 				// Parse the xml
 				SAXParserFactory saxFactory = SAXParserFactory.newInstance();
 				SAXParser saxParser = saxFactory.newSAXParser();
 				NextTripHandler handler = new NextTripHandler();
 				StringReader sr = new StringReader(xml);
 				saxParser.parse(new InputSource(sr), handler);
-				
+
 				// Get the result from the parse
 				departures = handler.getDepartureList();
 			}

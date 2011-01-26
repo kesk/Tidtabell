@@ -10,7 +10,7 @@ public class StopSearchHandler extends DefaultHandler
 	private boolean mInItem = false, mInStopName = false,
 	        mInFriendlyName = false, mInCounty = false;
 
-	private Vector<Stop> mStops;
+	private Vector<Stop> mStops = new Vector<Stop>();
 	private Stop mCurrentStop;
 
 	@Override

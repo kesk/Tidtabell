@@ -5,18 +5,8 @@
   android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
     
-  <Button
-    android:id="@+id/button"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerInParent="true"
-    android:text="Ullevi"/>
-    
-  <Button
-    android:id="@+id/search_button"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerInParent="true"
-    android:layout_below="@id/button"
-    android:text="Sök"/>
+  <TextView
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:text="@string/main_saved_stations"/>
 </RelativeLayout>

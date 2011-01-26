@@ -2,63 +2,63 @@ package com.bender.tidtabell;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
-import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 public class Tidtabell extends Activity
 {
 	public static final String IDENTIFIER = "1d1b034c-b4cc-49ec-a69e-70b91f5fb325";
+	public static final String NEXT_TRIP_URL = "http://vasttrafik.se/"
+	        + "External_Services/NextTrip.asmx/" + "GetForecast?identifier="
+	        + IDENTIFIER;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
-		Button button = (Button) findViewById(R.id.button);
-		button.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v)
-			{
-				Intent i = new Intent(Tidtabell.this, NextTrip.class);
-				Bundle b = new Bundle();
-				b.putString("stopId", "00007171");
-				b.putString("stopName", "Ullevi Norra");
-				i.putExtras(b);
-				startActivity(i);
-			}
-		});
-
-		Button b2 = (Button) findViewById(R.id.search_button);
-		b2.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v)
-			{
-				Intent i = new Intent(Tidtabell.this, StopSearch.class);
-				startActivity(i);
-			}
-		});
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.tidtabell, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		return menuItemSelectHandler(this, item)
+		        || super.onOptionsItemSelected(item);
+	}
+
+	public static boolean menuItemSelectHandler(Activity activity, MenuItem item)
+	{
+		switch (item.getItemId())
+		{
+		case R.id.menu_search:
+			activity.onSearchRequested();
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	// Takes the XML that Västtrafik returns and extracts the XML stored as a
+	// string inside the XML (ARGH!)
 	protected static String getXmlData(InputStream is)
 	        throws ParserConfigurationException, IOException, SAXException
 	{
