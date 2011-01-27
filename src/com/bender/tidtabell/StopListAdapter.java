@@ -10,12 +10,12 @@ import android.widget.BaseAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-public class SearchListAdapter extends BaseAdapter
+public class StopListAdapter extends BaseAdapter
 {
 	Context mContext;
 	Vector<Stop> mStops;
 
-	public SearchListAdapter(Context context, Vector<Stop> stops)
+	public StopListAdapter(Context context, Vector<Stop> stops)
 	{
 		mContext = context;
 		mStops = stops;

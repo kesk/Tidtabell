@@ -4,11 +4,27 @@
   android:layout_width="fill_parent"
   android:layout_height="fill_parent">
   
-  <TextView
+  <RelativeLayout
     android:id="@+id/next_trip_header"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:textSize="10pt"/>
+    android:background="#ff444444">
+
+    <TextView
+      android:id="@+id/stop_name"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textSize="10pt"/>
+    
+    <ToggleButton
+      android:id="@+id/favorite_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_toRightOf="@id/stop_name"
+      android:textOn=""
+      android:textOff=""
+      android:background="@android:drawable/btn_star"/>
+  </RelativeLayout>
   
   <ListView
     android:id="@id/android:list"

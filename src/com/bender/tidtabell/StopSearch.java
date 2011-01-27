@@ -31,11 +31,10 @@ import android.widget.AdapterView.OnItemClickListener;
 public class StopSearch extends ListActivity
 {
 	private static final String NUM_SEARCH_RESULT = "5";
-	public static final String SEARCH_URL = "http://www.vasttrafik.se/"
-	        + "External_Services/TravelPlanner.asmx/"
-	        + "GetStopsSuggestions?identifier=" + Tidtabell.IDENTIFIER;
+	public static final String SEARCH_URL = "http://www.vasttrafik.se/External_Services/TravelPlanner.asmx/GetStopsSuggestions?identifier="
+	        + Tidtabell.IDENTIFIER;
 
-	private SearchListAdapter mListAdapter;
+	private StopListAdapter mListAdapter;
 	private ProgressDialog mProgressDialog;
 	private Vector<Stop> mStops = new Vector<Stop>();
 
@@ -43,7 +42,7 @@ public class StopSearch extends ListActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		mListAdapter = new SearchListAdapter(this, mStops);
+		mListAdapter = new StopListAdapter(this, mStops);
 		setListAdapter(mListAdapter);
 
 		Intent intent = getIntent();
@@ -58,6 +57,7 @@ public class StopSearch extends ListActivity
 				Bundle b = new Bundle();
 				b.putString("stopId", mStops.get((int) id).getId());
 				b.putString("stopName", mStops.get((int) id).getName());
+				b.putSerializable("stop", mStops.get((int) id));
 				intent.putExtras(b);
 				startActivity(intent);
 			}

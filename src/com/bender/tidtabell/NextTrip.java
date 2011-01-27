@@ -17,17 +17,24 @@ import org.xml.sax.SAXException;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 public class NextTrip extends ListActivity
 {
 	public static final int ERROR_DIALOG = 0, PROGRESS_DIALOG = 1;
+	public static final String NEXT_TRIP_URL = "http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?identifier="
+	        + Tidtabell.IDENTIFIER;
 
 	private ProgressDialog mProgressDialog;
 	private DepartureListAdapter mListAdapter;
@@ -41,29 +48,48 @@ public class NextTrip extends ListActivity
 		setContentView(R.layout.next_trip);
 
 		Bundle b = getIntent().getExtras();
-		String stopId;
-		String stopName;
+		final Stop stop;
 
 		if (b != null)
 		{
-			stopId = b.getString("stopId");
-			stopName = b.getString("stopName");
+			stop = (Stop) b.getSerializable("stop");
 
-			TextView tv = (TextView) findViewById(R.id.next_trip_header);
-			tv.setText(stopName);
+			TextView tv = (TextView) findViewById(R.id.stop_name);
+			tv.setText(stop.getName());
 
-			StringBuilder s = new StringBuilder();
-			s.append("http://vasttrafik.se/External_Services/");
+			final ToggleButton favToggle = (ToggleButton) findViewById(R.id.favorite_button);
+			
+			// If this station is a favorite
+			DatabaseOpenHelper db = new DatabaseOpenHelper(this);
+			if (db.isFavorite(stop))
+			{
+				// Set star to checked
+				favToggle.setChecked(true);
+			}
+			db.close();
+			
+			favToggle.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v)
+				{
+					DatabaseOpenHelper db = new DatabaseOpenHelper(NextTrip.this);
+					
+					if (favToggle.isChecked())
+					{
+						Toast.makeText(NextTrip.this, R.string.add_favorite_toast, Toast.LENGTH_SHORT).show();
+						db.addFavoriteStop(stop);
+					}
+					else
+					{
+						Toast.makeText(NextTrip.this, R.string.remove_favorite_toast, Toast.LENGTH_SHORT).show();
+						db.removeFavorite(stop);
+					}
+				}
+			});
 
-			s.append("NextTrip.asmx/GetForecast");
+			String url = NEXT_TRIP_URL + "&stopId=" + stop.getId();
 
-			s.append("?identifier=");
-			s.append(Tidtabell.IDENTIFIER);
-
-			s.append("&stopId=");
-			s.append(stopId);
-
-			new NextTripQueryTask().execute(s.toString());
+			new NextTripQueryTask().execute(url);
 		}
 	}
 
@@ -110,8 +136,9 @@ public class NextTrip extends ListActivity
 		protected void onPreExecute()
 		{
 			// Show "loading" dialog
-			mProgressDialog = ProgressDialog.show(NextTrip.this, "",
-			        "Loading. Please wait...", true);
+//			mProgressDialog = ProgressDialog.show(NextTrip.this, "",
+//			        "Loading. Please wait...", true);
+			showDialog(PROGRESS_DIALOG);
 		}
 
 		@Override
@@ -161,7 +188,8 @@ public class NextTrip extends ListActivity
 		protected void onPostExecute(Vector<Departure> result)
 		{
 			// Dismiss "loading" dialog
-			mProgressDialog.dismiss();
+			//mProgressDialog.dismiss();
+			dismissDialog(PROGRESS_DIALOG);
 
 			// Update the list y0!
 			mListAdapter.updateData(result);

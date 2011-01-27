@@ -6,7 +6,23 @@
 	android:layout_height="fill_parent">
     
   <TextView
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:id="@+id/header"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:text="@string/main_saved_stations"/>
+    
+  <ToggleButton
+    android:id="@+id/favorite_button"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_toRightOf="@id/header"
+    android:textOn=""
+    android:textOff=""
+    android:background="@android:drawable/btn_star"/>
+    
+  <ListView
+    android:id="@id/android:list"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/header"/>
 </RelativeLayout>
