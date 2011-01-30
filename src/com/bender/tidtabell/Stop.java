@@ -2,8 +2,6 @@ package com.bender.tidtabell;
 
 import java.io.Serializable;
 
-import android.database.sqlite.SQLiteDatabase;
-
 public class Stop implements Serializable
 {
 	private static final long serialVersionUID = 2466085735607712099L;

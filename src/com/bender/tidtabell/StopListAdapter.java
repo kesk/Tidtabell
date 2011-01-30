@@ -3,7 +3,7 @@ package com.bender.tidtabell;
 import java.util.Vector;
 
 import android.content.Context;
-import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -69,10 +69,17 @@ public class StopListAdapter extends BaseAdapter
 		public SearchListItem(Context context, String text)
 		{
 			super(context);
-			textView = new TextView(context);
+			
+			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			inflater.inflate(R.layout.stop_list_item, this);
+			
+			textView = (TextView) findViewById(R.id.stop_name);
 			textView.setText(text);
-			textView.setTextSize(TypedValue.COMPLEX_UNIT_PT, 12);
-			addView(textView);
+			
+//			textView = new TextView(context);
+//			textView.setText(text);
+//			textView.setTextSize(TypedValue.COMPLEX_UNIT_PT, 12);
+//			addView(textView);
 		}
 
 		public void setName(String name)

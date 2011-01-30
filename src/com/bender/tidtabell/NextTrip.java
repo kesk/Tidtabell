@@ -1,5 +1,7 @@
 package com.bender.tidtabell;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
@@ -17,10 +19,10 @@ import org.xml.sax.SAXException;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.Context;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,59 +40,114 @@ public class NextTrip extends ListActivity
 
 	private ProgressDialog mProgressDialog;
 	private DepartureListAdapter mListAdapter;
+	private DatabaseOpenHelper mDb;
+	private Cursor mFavoriteCursor;
+	private NextTripQueryTask mNextTripQueryTask;
+	private Stop mStop;
+	private Vector<Departure> mDepartures = null;
 
-	@Override
+	@SuppressWarnings("unchecked")
+    @Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
+		mDb = new DatabaseOpenHelper(this);
+		
+		if (savedInstanceState != null)
+		{
+			mDepartures = (Vector<Departure>) savedInstanceState
+			        .getSerializable("departures");
+		}
+
 		mListAdapter = new DepartureListAdapter(this);
 		setListAdapter(mListAdapter);
 		setContentView(R.layout.next_trip);
 
 		Bundle b = getIntent().getExtras();
-		final Stop stop;
-
 		if (b != null)
 		{
-			stop = (Stop) b.getSerializable("stop");
+			mStop = (Stop) b.getSerializable("stop");
+		}
 
+		if (mStop != null)
+		{
 			TextView tv = (TextView) findViewById(R.id.stop_name);
-			tv.setText(stop.getName());
+			tv.setText(mStop.getName());
 
 			final ToggleButton favToggle = (ToggleButton) findViewById(R.id.favorite_button);
-			
+			mFavoriteCursor = mDb.getFavorite(mStop.getId());
+
 			// If this station is a favorite
-			DatabaseOpenHelper db = new DatabaseOpenHelper(this);
-			if (db.isFavorite(stop))
+			if (mFavoriteCursor.moveToFirst())
 			{
 				// Set star to checked
 				favToggle.setChecked(true);
 			}
-			db.close();
-			
+
 			favToggle.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v)
 				{
-					DatabaseOpenHelper db = new DatabaseOpenHelper(NextTrip.this);
-					
+					DatabaseOpenHelper db = new DatabaseOpenHelper(
+					        NextTrip.this);
+
 					if (favToggle.isChecked())
 					{
-						Toast.makeText(NextTrip.this, R.string.add_favorite_toast, Toast.LENGTH_SHORT).show();
-						db.addFavoriteStop(stop);
+						Toast.makeText(NextTrip.this,
+						        R.string.add_favorite_toast, Toast.LENGTH_SHORT)
+						        .show();
+						db.addFavorite(mStop);
 					}
 					else
 					{
-						Toast.makeText(NextTrip.this, R.string.remove_favorite_toast, Toast.LENGTH_SHORT).show();
-						db.removeFavorite(stop);
+						Toast.makeText(NextTrip.this,
+						        R.string.remove_favorite_toast,
+						        Toast.LENGTH_SHORT).show();
+						db.removeFavorite(mStop);
 					}
 				}
 			});
 
-			String url = NEXT_TRIP_URL + "&stopId=" + stop.getId();
+			if (mDepartures == null)
+			{
+				String url = NEXT_TRIP_URL + "&stopId=" + mStop.getId();
 
-			new NextTripQueryTask().execute(url);
+				mNextTripQueryTask = (NextTripQueryTask) new NextTripQueryTask()
+				        .execute(url);
+			}
+			else
+			{
+				mListAdapter.updateData(mDepartures);
+			}
 		}
+	}
+
+	@Override
+	protected void onRestart()
+	{
+		super.onRestart();
+
+		mFavoriteCursor.requery();
+	}
+
+	@Override
+	protected void onStop()
+	{
+		super.onStop();
+
+		mFavoriteCursor.deactivate();
+	}
+
+	@Override
+	protected void onDestroy()
+	{
+		super.onDestroy();
+
+		mFavoriteCursor.close();
+		
+		if (mNextTripQueryTask != null)
+			mNextTripQueryTask.cancel(true);
 	}
 
 	@Override
@@ -127,6 +184,9 @@ public class NextTrip extends ListActivity
 	protected void onSaveInstanceState(Bundle outState)
 	{
 		super.onSaveInstanceState(outState);
+
+		if (mDepartures != null)
+			outState.putSerializable("departures", mDepartures);
 	}
 
 	private class NextTripQueryTask extends
@@ -136,8 +196,8 @@ public class NextTrip extends ListActivity
 		protected void onPreExecute()
 		{
 			// Show "loading" dialog
-//			mProgressDialog = ProgressDialog.show(NextTrip.this, "",
-//			        "Loading. Please wait...", true);
+			// mProgressDialog = ProgressDialog.show(NextTrip.this, "",
+			// "Loading. Please wait...", true);
 			showDialog(PROGRESS_DIALOG);
 		}
 
@@ -145,41 +205,50 @@ public class NextTrip extends ListActivity
 		protected Vector<Departure> doInBackground(String... params)
 		{
 			Vector<Departure> departures = null;
+			HttpURLConnection connection = null;
 
+			// Connect to Västtrafik
 			try
 			{
 				URL url = new URL(params[0]);
-				HttpURLConnection connection = (HttpURLConnection) url
-				        .openConnection();
+				connection = (HttpURLConnection) url.openConnection();
+			}
+			catch (MalformedURLException e)
+			{
+			}
+			catch (IOException e)
+			{
+				// Connection could not be made
+				e.printStackTrace();
+			}
 
+			NextTripHandler handler = new NextTripHandler();
+			try
+			{
 				String xml = Tidtabell.getXmlData(connection.getInputStream());
 
 				// Parse the xml
 				SAXParserFactory saxFactory = SAXParserFactory.newInstance();
 				SAXParser saxParser = saxFactory.newSAXParser();
-				NextTripHandler handler = new NextTripHandler();
 				StringReader sr = new StringReader(xml);
 				saxParser.parse(new InputSource(sr), handler);
-
-				// Get the result from the parse
-				departures = handler.getDepartureList();
-			}
-			catch (MalformedURLException e)
-			{
-				Log.e("Tidtabell", e.toString());
-			}
-			catch (IOException e)
-			{
-				Log.e("Tidtabell", e.toString());
 			}
 			catch (ParserConfigurationException e)
 			{
-				Log.e("Tidtabell", e.toString());
+			}
+			catch (IOException e)
+			{
+				// Something went wrong with the IO during parse
+				e.printStackTrace();
 			}
 			catch (SAXException e)
 			{
-				Log.e("Tidtabell", e.toString());
+				// Something went wrong with the parse
+				e.printStackTrace();
 			}
+
+			// Get the result from the parse
+			departures = handler.getDepartureList();
 
 			return departures;
 		}
@@ -188,11 +257,39 @@ public class NextTrip extends ListActivity
 		protected void onPostExecute(Vector<Departure> result)
 		{
 			// Dismiss "loading" dialog
-			//mProgressDialog.dismiss();
+			// mProgressDialog.dismiss();
 			dismissDialog(PROGRESS_DIALOG);
 
 			// Update the list y0!
+			mDepartures = result;
 			mListAdapter.updateData(result);
+		}
+		
+		@Override
+		protected void onCancelled()
+		{
+			removeDialog(PROGRESS_DIALOG);
+		}
+	}
+
+	private void saveToFile(String s)
+	{
+		String FILENAME = "xml_debug.txt";
+
+		try
+		{
+			FileOutputStream fos = openFileOutput(FILENAME,
+			        Context.MODE_PRIVATE);
+			fos.write(s.getBytes());
+			fos.close();
+		}
+		catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 }

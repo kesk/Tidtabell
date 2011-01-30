@@ -6,7 +6,7 @@
 <string name="loading_dialog">Laddar...</string>
 <string name="search_hint">Namn på hållplats</string>
 <string name="menu_stop_search">Sök hållplats</string>
-<string name="main_saved_stations">Sparade stationer</string>
+<string name="main_saved_stops">Sparade hållplatser</string>
 <string name="add_favorite_toast">Hållplatsen har lagts till som favorit.</string>
 <string name="remove_favorite_toast">Hållplatsen har tagits bort som favorit.</string>
 </resources>

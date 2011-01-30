@@ -7,8 +7,8 @@
   <RelativeLayout
     android:id="@+id/next_trip_header"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:background="#ff444444">
+    android:layout_height="50dp"
+    android:background="@drawable/gradient">
 
     <TextView
       android:id="@+id/stop_name"
@@ -29,6 +29,6 @@
   <ListView
     android:id="@id/android:list"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="fill_parent"
     android:layout_below="@id/next_trip_header"/>
 </RelativeLayout>

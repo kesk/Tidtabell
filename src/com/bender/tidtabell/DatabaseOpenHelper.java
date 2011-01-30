@@ -1,7 +1,5 @@
 package com.bender.tidtabell;
 
-import java.util.Vector;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -11,10 +9,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseOpenHelper extends SQLiteOpenHelper
 {
 	private static final int VERSION = 1;
-	private static final String DATABASE_NAME = "tidtabell";
-	private static final String TABLE_NAME = "stations";
-	private static final String STATION_ID = "station_id";
-	private static final String STATION_NAME = "station_name";
+	public static final String DATABASE_NAME = "tidtabell";
+	public static final String TABLE_NAME = "stations";
+	public static final String STATION_ID = "station_id";
+	public static final String STATION_NAME = "station_name";
 
 	public DatabaseOpenHelper(Context context)
 	{
@@ -36,7 +34,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper
 	}
 
 	// Add a stop to favorites
-	public void addFavoriteStop(Stop stop)
+	public void addFavorite(Stop stop)
 	{
 		SQLiteDatabase db = getWritableDatabase();
 
@@ -58,46 +56,20 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper
 		db.close();
 	}
 
-	public boolean isFavorite(Stop stop)
+	public Cursor getFavorite(String stopId)
 	{
 		SQLiteDatabase db = getReadableDatabase();
-		String[] columns = { STATION_ID };
 		String selection = STATION_ID + " = ?";
-		String[] args = { stop.getId() };
-		Cursor cursor = db.query(TABLE_NAME, columns, selection, args, null,
-		        null, null);
+		String[] args = { stopId };
 
-		return cursor.moveToFirst();
+		return db
+		        .query(TABLE_NAME, null, selection, args, null, null, "id ASC");
 	}
 
-	public Vector<Stop> getFavouriteStops()
+	public Cursor getAllFavourites()
 	{
 		SQLiteDatabase db = getReadableDatabase();
 
-		Cursor cursor = db.query(TABLE_NAME, null, null, null, null, null,
-		        "id ASC");
-		Vector<Stop> result = new Vector<Stop>();
-
-		if (cursor.moveToFirst())
-		{
-			result = new Vector<Stop>();
-
-			do
-			{
-				Stop stop = new Stop();
-				String id = cursor.getString(cursor.getColumnIndex(STATION_ID));
-				stop.setId(id);
-
-				String name = cursor.getString(cursor
-				        .getColumnIndex(STATION_NAME));
-				stop.setName(name);
-
-				result.add(stop);
-			} while (cursor.moveToNext());
-		}
-		cursor.close();
-		db.close();
-
-		return result;
+		return db.query(TABLE_NAME, null, null, null, null, null, "id ASC");
 	}
 }

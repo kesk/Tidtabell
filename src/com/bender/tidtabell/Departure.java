@@ -1,9 +1,12 @@
 package com.bender.tidtabell;
 
+import java.io.Serializable;
 import java.util.GregorianCalendar;
 
-public class Departure
+public class Departure implements Serializable
 {
+	private static final long serialVersionUID = 964593260545572076L;
+	
 	private String mLine;
 	private int[] mLineForegroundColor = { 255, 255, 255, 255 };
 	private int[] mLineBackgroundColor = { 0, 0, 0, 0 };
