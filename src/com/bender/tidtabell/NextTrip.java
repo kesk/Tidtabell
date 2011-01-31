@@ -21,8 +21,9 @@ import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -39,9 +40,10 @@ public class NextTrip extends ListActivity
 	        + Tidtabell.IDENTIFIER;
 
 	private ProgressDialog mProgressDialog;
-	private DepartureListAdapter mListAdapter;
+	private ForecastQuery mForecastQuery;
+
 	private DatabaseOpenHelper mDb;
-	private NextTripQueryTask mNextTripQueryTask;
+	private DepartureListAdapter mListAdapter;
 	private Stop mStop;
 	private Vector<Departure> mDepartures = null;
 
@@ -51,8 +53,15 @@ public class NextTrip extends ListActivity
 	{
 		super.onCreate(savedInstanceState);
 
+		if (getLastNonConfigurationInstance() != null)
+		{
+			mForecastQuery = (ForecastQuery) getLastNonConfigurationInstance();
+			mForecastQuery.setHandler(mHandler);
+		}
+
 		mDb = new DatabaseOpenHelper(this);
 
+		// If this is a restored activity show old departures
 		if (savedInstanceState != null)
 		{
 			mDepartures = (Vector<Departure>) savedInstanceState
@@ -69,70 +78,65 @@ public class NextTrip extends ListActivity
 			mStop = (Stop) b.getSerializable("stop");
 		}
 
-		if (mStop != null)
+		// Abort if there is no stop to show
+		if (mStop == null)
+			return;
+
+		TextView tv = (TextView) findViewById(R.id.stop_name);
+		tv.setText(mStop.getName());
+
+		final ToggleButton favToggle = (ToggleButton) findViewById(R.id.favorite_button);
+		Cursor favoriteCursor = mDb.getFavorite(mStop.getId());
+
+		// If this station is a favorite
+		if (favoriteCursor.moveToFirst())
 		{
-			TextView tv = (TextView) findViewById(R.id.stop_name);
-			tv.setText(mStop.getName());
+			// Set star to checked
+			favToggle.setChecked(true);
+		}
+		favoriteCursor.close();
 
-			final ToggleButton favToggle = (ToggleButton) findViewById(R.id.favorite_button);
-			Cursor favoriteCursor = mDb.getFavorite(mStop.getId());
-
-			// If this station is a favorite
-			if (favoriteCursor.moveToFirst())
+		// Click listener for favorite toggle
+		favToggle.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v)
 			{
-				// Set star to checked
-				favToggle.setChecked(true);
-			}
-			favoriteCursor.close();
+				DatabaseOpenHelper db = new DatabaseOpenHelper(NextTrip.this);
 
-			favToggle.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v)
+				if (favToggle.isChecked())
 				{
-					DatabaseOpenHelper db = new DatabaseOpenHelper(
-					        NextTrip.this);
-
-					if (favToggle.isChecked())
-					{
-						Toast.makeText(NextTrip.this,
-						        R.string.add_favorite_toast, Toast.LENGTH_SHORT)
-						        .show();
-						db.addFavorite(mStop);
-					}
-					else
-					{
-						Toast.makeText(NextTrip.this,
-						        R.string.remove_favorite_toast,
-						        Toast.LENGTH_SHORT).show();
-						db.removeFavorite(mStop);
-					}
+					Toast.makeText(NextTrip.this, R.string.add_favorite_toast,
+					        Toast.LENGTH_SHORT).show();
+					db.addFavorite(mStop);
 				}
-			});
-
-			if (mDepartures == null)
-			{
-				String url = NEXT_TRIP_URL + "&stopId=" + mStop.getId();
-
-				if (savedInstanceState == null)
-					mNextTripQueryTask = (NextTripQueryTask) new NextTripQueryTask()
-					        .execute(url);
 				else
-					dismissDialog(PROGRESS_DIALOG);
+				{
+					Toast.makeText(NextTrip.this,
+					        R.string.remove_favorite_toast, Toast.LENGTH_SHORT)
+					        .show();
+					db.removeFavorite(mStop);
+				}
 			}
-			else
+		});
+
+		if (mDepartures == null)
+		{
+			String url = NEXT_TRIP_URL + "&stopId=" + mStop.getId();
+
+			if (savedInstanceState == null
+			        && getLastNonConfigurationInstance() == null)
 			{
-				mListAdapter.updateData(mDepartures);
+				mForecastQuery = new ForecastQuery(mHandler, url);
+				showDialog(PROGRESS_DIALOG, null);
+				mForecastQuery.start();
 			}
 		}
-	}
-
-	@Override
-	protected void onDestroy()
-	{
-		super.onDestroy();
-
-		if (mNextTripQueryTask != null)
-			mNextTripQueryTask.cancel(true);
+		else
+		{
+			mListAdapter.updateData(mDepartures);
+		}
+		
+		mDb.close();
 	}
 
 	@Override
@@ -174,26 +178,40 @@ public class NextTrip extends ListActivity
 			outState.putSerializable("departures", mDepartures);
 	}
 
-	private class NextTripQueryTask extends
-	        AsyncTask<String, Void, Vector<Departure>>
+	@Override
+	public Object onRetainNonConfigurationInstance()
 	{
-		@Override
-		protected void onPreExecute()
+		return mForecastQuery;
+	}
+
+	private class ForecastQuery extends Thread
+	{
+		public static final byte STATE_NOT_STARTED = 0, STATE_RUNNNING = 1,
+		        STATE_DONE = 2;
+
+		public static final int MESSAGE_COMPLETE = 0;
+
+		Handler mHandler;
+		String mAddress;
+		Vector<Departure> mResult = null;
+		byte mStatus = STATE_NOT_STARTED;
+
+		public ForecastQuery(Handler handler, String address)
 		{
-			// Show "loading" dialog
-			showDialog(PROGRESS_DIALOG);
+			mHandler = handler;
+			mAddress = address;
 		}
 
 		@Override
-		protected Vector<Departure> doInBackground(String... params)
+		public void run()
 		{
-			Vector<Departure> departures = null;
+			mStatus = STATE_RUNNNING;
 			HttpURLConnection connection = null;
 
 			// Connect to Västtrafik
 			try
 			{
-				URL url = new URL(params[0]);
+				URL url = new URL(mAddress);
 				connection = (HttpURLConnection) url.openConnection();
 			}
 			catch (MalformedURLException e)
@@ -231,22 +249,44 @@ public class NextTrip extends ListActivity
 			}
 
 			// Get the result from the parse
-			departures = handler.getDepartureList();
+			mResult = handler.getDepartureList();
+			mHandler.sendEmptyMessage(MESSAGE_COMPLETE);
 
-			return departures;
+			mStatus = STATE_DONE;
 		}
 
-		@Override
-		protected void onPostExecute(Vector<Departure> result)
+		public void setHandler(Handler handler)
 		{
-			// Dismiss "loading" dialog
-			dismissDialog(PROGRESS_DIALOG);
+			mHandler = handler;
+		}
 
-			// Update the list y0!
-			mDepartures = result;
-			mListAdapter.updateData(result);
+		public byte getStatus()
+		{
+			return mStatus;
+		}
+
+		public Vector<Departure> getResult()
+		{
+			return mResult;
 		}
 	}
+
+ 	final Handler mHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg)
+		{
+			switch (msg.what)
+			{
+			case ForecastQuery.MESSAGE_COMPLETE:
+				dismissDialog(PROGRESS_DIALOG);
+				mDepartures = mForecastQuery.getResult();
+				mListAdapter.updateData(mDepartures);
+				break;
+			default:
+				break;
+			}
+		}
+	};
 
 	private void saveToFile(String s)
 	{
