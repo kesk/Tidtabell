@@ -41,19 +41,18 @@ public class NextTrip extends ListActivity
 	private ProgressDialog mProgressDialog;
 	private DepartureListAdapter mListAdapter;
 	private DatabaseOpenHelper mDb;
-	private Cursor mFavoriteCursor;
 	private NextTripQueryTask mNextTripQueryTask;
 	private Stop mStop;
 	private Vector<Departure> mDepartures = null;
 
 	@SuppressWarnings("unchecked")
-    @Override
+	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 
 		mDb = new DatabaseOpenHelper(this);
-		
+
 		if (savedInstanceState != null)
 		{
 			mDepartures = (Vector<Departure>) savedInstanceState
@@ -76,14 +75,15 @@ public class NextTrip extends ListActivity
 			tv.setText(mStop.getName());
 
 			final ToggleButton favToggle = (ToggleButton) findViewById(R.id.favorite_button);
-			mFavoriteCursor = mDb.getFavorite(mStop.getId());
+			Cursor favoriteCursor = mDb.getFavorite(mStop.getId());
 
 			// If this station is a favorite
-			if (mFavoriteCursor.moveToFirst())
+			if (favoriteCursor.moveToFirst())
 			{
 				// Set star to checked
 				favToggle.setChecked(true);
 			}
+			favoriteCursor.close();
 
 			favToggle.setOnClickListener(new OnClickListener() {
 				@Override
@@ -113,8 +113,11 @@ public class NextTrip extends ListActivity
 			{
 				String url = NEXT_TRIP_URL + "&stopId=" + mStop.getId();
 
-				mNextTripQueryTask = (NextTripQueryTask) new NextTripQueryTask()
-				        .execute(url);
+				if (savedInstanceState == null)
+					mNextTripQueryTask = (NextTripQueryTask) new NextTripQueryTask()
+					        .execute(url);
+				else
+					dismissDialog(PROGRESS_DIALOG);
 			}
 			else
 			{
@@ -124,28 +127,10 @@ public class NextTrip extends ListActivity
 	}
 
 	@Override
-	protected void onRestart()
-	{
-		super.onRestart();
-
-		mFavoriteCursor.requery();
-	}
-
-	@Override
-	protected void onStop()
-	{
-		super.onStop();
-
-		mFavoriteCursor.deactivate();
-	}
-
-	@Override
 	protected void onDestroy()
 	{
 		super.onDestroy();
 
-		mFavoriteCursor.close();
-		
 		if (mNextTripQueryTask != null)
 			mNextTripQueryTask.cancel(true);
 	}
@@ -196,8 +181,6 @@ public class NextTrip extends ListActivity
 		protected void onPreExecute()
 		{
 			// Show "loading" dialog
-			// mProgressDialog = ProgressDialog.show(NextTrip.this, "",
-			// "Loading. Please wait...", true);
 			showDialog(PROGRESS_DIALOG);
 		}
 
@@ -257,18 +240,11 @@ public class NextTrip extends ListActivity
 		protected void onPostExecute(Vector<Departure> result)
 		{
 			// Dismiss "loading" dialog
-			// mProgressDialog.dismiss();
 			dismissDialog(PROGRESS_DIALOG);
 
 			// Update the list y0!
 			mDepartures = result;
 			mListAdapter.updateData(result);
-		}
-		
-		@Override
-		protected void onCancelled()
-		{
-			removeDialog(PROGRESS_DIALOG);
 		}
 	}
 
