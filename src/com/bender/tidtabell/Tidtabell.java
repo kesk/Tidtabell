@@ -9,6 +9,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
@@ -30,6 +33,7 @@ public class Tidtabell extends ListActivity
 	
 	DatabaseOpenHelper mDb;
 	Cursor mFavoriteStops;
+	Vector<Stop> mStops;
 	StopListAdapter mListAdapter;
 
 	@Override
@@ -40,8 +44,8 @@ public class Tidtabell extends ListActivity
 		
 		mDb = new DatabaseOpenHelper(this);
 		mFavoriteStops = mDb.getAllFavourites();
-		final Vector<Stop> stops = mkStopList(mFavoriteStops);
-		mListAdapter = new StopListAdapter(this, stops);
+		mStops = mkStopList(mFavoriteStops);
+		mListAdapter = new StopListAdapter(this, mStops);
 		setListAdapter(mListAdapter);
 		
 		ListView listView = getListView();
@@ -53,7 +57,7 @@ public class Tidtabell extends ListActivity
             {
 	            Intent intent = new Intent(Tidtabell.this, NextTrip.class);
 	            Bundle b = new Bundle();
-	            b.putSerializable("stop", stops.get((int) id));
+	            b.putSerializable("stop", mStops.get((int) id));
 	            intent.putExtras(b);
 	            startActivity(intent);
             }
@@ -65,8 +69,8 @@ public class Tidtabell extends ListActivity
 	{
 		super.onRestart();
 		mFavoriteStops.requery();
-		Vector<Stop> stops = mkStopList(mFavoriteStops);
-		mListAdapter.updateList(stops);
+		mStops = mkStopList(mFavoriteStops);
+		mListAdapter.updateList(mStops);
 	}
 	
 	@Override
@@ -117,9 +121,18 @@ public class Tidtabell extends ListActivity
 	{
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = dbf.newDocumentBuilder();
-		Document doc = db.parse(is);
-
-		return doc.getDocumentElement().getTextContent();
+		Document dom = db.parse(is);
+		
+		StringBuilder sb = new StringBuilder();
+		Element root = dom.getDocumentElement();
+		NodeList items = root.getElementsByTagName("string").item(0).getChildNodes();
+		for (int i=0; i<items.getLength(); i++)
+		{
+			Node node = items.item(i);
+			sb.append(node.getNodeValue());
+		}
+		
+		return sb.toString();
 	}
 	
 	private Vector<Stop> mkStopList(Cursor cursor)

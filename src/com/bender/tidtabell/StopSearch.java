@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -14,12 +15,18 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import android.app.Activity;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnCancelListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,11 +41,13 @@ public class StopSearch extends ListActivity
 	public static final String SEARCH_URL = "http://www.vasttrafik.se/External_Services/TravelPlanner.asmx/GetStopsSuggestions?identifier="
 	        + Tidtabell.IDENTIFIER;
 
-	private StopListAdapter mListAdapter;
-	private ProgressDialog mProgressDialog;
-	private Vector<Stop> mStops = new Vector<Stop>();
+	public static final int DIALOG_PROGRESS = 0;
 
-	@Override
+	private StopListAdapter mListAdapter;
+	private Vector<Stop> mStops = new Vector<Stop>();
+	private QueryRunner mQueryRunner;
+	
+    @Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
@@ -63,14 +72,29 @@ public class StopSearch extends ListActivity
 			}
 		});
 
+		// There is already a search thread started
+		if (getLastNonConfigurationInstance() != null)
+		{
+			mQueryRunner = (QueryRunner) getLastNonConfigurationInstance();
+			mQueryRunner.setMsgHandler(mMsgHandler);
+		}
+		// Search has already been performed
+		else if (savedInstanceState != null)
+		{
+			mStops = (Vector<Stop>) savedInstanceState.getSerializable("stops");
+			mListAdapter.updateList(mStops);
+		}
 		// If the intent was a search intent then perform the search
-		if (Intent.ACTION_SEARCH.equals(intent.getAction()))
+		else if (Intent.ACTION_SEARCH.equals(intent.getAction()))
 		{
 			String query = intent.getStringExtra(SearchManager.QUERY);
 			String url = SEARCH_URL + "&searchString=" + query + "&count="
 			        + NUM_SEARCH_RESULT;
 
-			new StopSearchQueryTask().execute(url);
+			mQueryRunner = new QueryRunner(new StopSearchHandler(),
+			        mMsgHandler, url);
+			showDialog(DIALOG_PROGRESS);
+			new Thread(mQueryRunner).start();
 		}
 	}
 
@@ -84,8 +108,23 @@ public class StopSearch extends ListActivity
 			String url = SEARCH_URL + "&searchString=" + query + "&count="
 			        + NUM_SEARCH_RESULT;
 
-			new StopSearchQueryTask().execute(url);
+			if (mQueryRunner != null)
+				mQueryRunner.stopThread();
+
+			mQueryRunner = new QueryRunner(new StopSearchHandler(),
+			        mMsgHandler, url);
+			showDialog(DIALOG_PROGRESS);
+			new Thread(mQueryRunner).start();
 		}
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState)
+	{
+		if (mStops != null)
+			outState.putSerializable("stops", mStops);
+
+		super.onSaveInstanceState(outState);
 	}
 
 	@Override
@@ -103,69 +142,57 @@ public class StopSearch extends ListActivity
 		        || super.onOptionsItemSelected(item);
 	}
 
-	private class StopSearchQueryTask extends
-	        AsyncTask<String, Void, Vector<Stop>>
+	@Override
+	public Object onRetainNonConfigurationInstance()
 	{
-		@Override
-		protected void onPreExecute()
+		if (mQueryRunner == null || mQueryRunner.getStatus() == QueryRunner.STATE_RUNNNING)
+			return mQueryRunner;
+		else
+			return null;
+	}
+
+	@Override
+	protected Dialog onCreateDialog(int id)
+	{
+		ProgressDialog dialog;
+
+		switch (id)
 		{
-			// Show "loading" dialog
-			mProgressDialog = ProgressDialog.show(StopSearch.this, "",
-			        "Loading. Please wait...", true);
-		}
-
-		@Override
-		protected Vector<Stop> doInBackground(String... params)
-		{
-			Vector<Stop> stops = null;
-
-			try
-			{
-				URL url = new URL(params[0]);
-				HttpURLConnection connection = (HttpURLConnection) url
-				        .openConnection();
-
-				String xml = Tidtabell.getXmlData(connection.getInputStream());
-
-				// Parse the xml
-				SAXParserFactory saxFactory = SAXParserFactory.newInstance();
-				SAXParser saxParser = saxFactory.newSAXParser();
-				StopSearchHandler handler = new StopSearchHandler();
-				StringReader sr = new StringReader(xml);
-				saxParser.parse(new InputSource(sr), handler);
-
-				// Get the result from the parse
-				stops = handler.getStops();
-			}
-			catch (MalformedURLException e)
-			{
-				Log.e("Tidtabell", e.toString());
-			}
-			catch (IOException e)
-			{
-				Log.e("Tidtabell", e.toString());
-			}
-			catch (ParserConfigurationException e)
-			{
-				Log.e("Tidtabell", e.toString());
-			}
-			catch (SAXException e)
-			{
-				Log.e("Tidtabell", e.toString());
-			}
-
-			return stops;
-		}
-
-		@Override
-		protected void onPostExecute(Vector<Stop> result)
-		{
-			// Dismiss "loading" dialog
-			mProgressDialog.dismiss();
-
-			// Update the list y0!
-			mStops = result;
-			mListAdapter.updateList(result);
+		case DIALOG_PROGRESS:
+			dialog = new ProgressDialog(this);
+			dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			dialog.setMessage(getString(R.string.loading_dialog));
+			dialog.setCancelable(true);
+			dialog.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog)
+				{
+					mQueryRunner.stopThread();
+					finish();
+				}
+			});
+			return dialog;
+		default:
+			return null;
 		}
 	}
+
+	private Handler mMsgHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg)
+		{
+			switch (msg.what)
+			{
+			case QueryRunner.MESSAGE_COMPLETE:
+				dismissDialog(DIALOG_PROGRESS);
+				StopSearchHandler h = (StopSearchHandler) mQueryRunner
+				        .getResult();
+				mStops = h.getStops();
+				mListAdapter.updateList(mStops);
+				break;
+			default:
+				break;
+			}
+		}
+	};
 }

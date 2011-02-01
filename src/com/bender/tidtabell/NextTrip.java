@@ -20,7 +20,11 @@ import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.database.Cursor;
+import android.database.CursorJoiner.Result;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -35,11 +39,10 @@ import android.widget.ToggleButton;
 
 public class NextTrip extends ListActivity
 {
-	public static final int ERROR_DIALOG = 0, PROGRESS_DIALOG = 1;
+	public static final int DIALOG_PROGRESS = 0;
 	public static final String NEXT_TRIP_URL = "http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?identifier="
 	        + Tidtabell.IDENTIFIER;
 
-	private ProgressDialog mProgressDialog;
 	private ForecastQuery mForecastQuery;
 
 	private DatabaseOpenHelper mDb;
@@ -127,8 +130,8 @@ public class NextTrip extends ListActivity
 			        && getLastNonConfigurationInstance() == null)
 			{
 				mForecastQuery = new ForecastQuery(mHandler, url);
-				showDialog(PROGRESS_DIALOG, null);
-				mForecastQuery.start();
+				showDialog(DIALOG_PROGRESS, null);
+				new Thread(mForecastQuery).start();
 			}
 		}
 		else
@@ -142,13 +145,24 @@ public class NextTrip extends ListActivity
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
+		ProgressDialog dialog;
+		
 		switch (id)
 		{
-		case PROGRESS_DIALOG:
-			mProgressDialog = new ProgressDialog(this);
-			mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-			mProgressDialog.setMessage(getString(R.string.loading_dialog));
-			return mProgressDialog;
+		case DIALOG_PROGRESS:
+			dialog = new ProgressDialog(this);
+			dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			dialog.setMessage(getString(R.string.loading_dialog));
+			dialog.setCancelable(true);
+			dialog.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog)
+				{
+					mForecastQuery.stopThread();
+					finish();
+				}
+			});
+			return dialog;
 		default:
 			return null;
 		}
@@ -172,10 +186,10 @@ public class NextTrip extends ListActivity
 	@Override
 	protected void onSaveInstanceState(Bundle outState)
 	{
-		super.onSaveInstanceState(outState);
-
 		if (mDepartures != null)
 			outState.putSerializable("departures", mDepartures);
+		
+		super.onSaveInstanceState(outState);
 	}
 
 	@Override
@@ -184,12 +198,14 @@ public class NextTrip extends ListActivity
 		return mForecastQuery;
 	}
 
-	private class ForecastQuery extends Thread
+	private class ForecastQuery implements Runnable
 	{
 		public static final byte STATE_NOT_STARTED = 0, STATE_RUNNNING = 1,
 		        STATE_DONE = 2;
 
 		public static final int MESSAGE_COMPLETE = 0;
+		
+		private boolean mStopThread;
 
 		Handler mHandler;
 		String mAddress;
@@ -205,6 +221,7 @@ public class NextTrip extends ListActivity
 		@Override
 		public void run()
 		{
+			mStopThread = false;
 			mStatus = STATE_RUNNNING;
 			HttpURLConnection connection = null;
 
@@ -248,11 +265,15 @@ public class NextTrip extends ListActivity
 				e.printStackTrace();
 			}
 
+			
 			// Get the result from the parse
 			mResult = handler.getDepartureList();
-			mHandler.sendEmptyMessage(MESSAGE_COMPLETE);
-
-			mStatus = STATE_DONE;
+			
+			if (!mStopThread)
+			{
+    			mHandler.sendEmptyMessage(MESSAGE_COMPLETE);
+    			mStatus = STATE_DONE;
+			}
 		}
 
 		public void setHandler(Handler handler)
@@ -269,6 +290,11 @@ public class NextTrip extends ListActivity
 		{
 			return mResult;
 		}
+		
+		public void stopThread()
+		{
+			mStopThread = true;
+		}
 	}
 
  	final Handler mHandler = new Handler() {
@@ -278,7 +304,7 @@ public class NextTrip extends ListActivity
 			switch (msg.what)
 			{
 			case ForecastQuery.MESSAGE_COMPLETE:
-				dismissDialog(PROGRESS_DIALOG);
+				dismissDialog(DIALOG_PROGRESS);
 				mDepartures = mForecastQuery.getResult();
 				mListAdapter.updateData(mDepartures);
 				break;
