@@ -5,28 +5,9 @@ import java.io.Serializable;
 public class Stop implements Serializable
 {
 	private static final long serialVersionUID = 2466085735607712099L;
-	
+
 	String id, name, friendlyName, county;
-
-	public String getCounty()
-    {
-    	return county;
-    }
-
-	public void setCounty(String county)
-    {
-    	this.county = county;
-    }
-
-	public String getFriendlyName()
-    {
-    	return friendlyName;
-    }
-
-	public void setFriendlyName(String friendlyName)
-    {
-    	this.friendlyName = friendlyName;
-    }
+	double latitude, longitude;
 
 	public String getId()
 	{
@@ -46,5 +27,45 @@ public class Stop implements Serializable
 	public void setName(String name)
 	{
 		this.name = name;
+	}
+
+	public String getFriendlyName()
+	{
+		return friendlyName;
+	}
+
+	public void setFriendlyName(String friendlyName)
+	{
+		this.friendlyName = friendlyName;
+	}
+
+	public String getCounty()
+	{
+		return county;
+	}
+
+	public void setCounty(String county)
+	{
+		this.county = county;
+	}
+
+	public double getLatitude()
+	{
+		return latitude;
+	}
+
+	public void setLatitude(double latitude)
+	{
+		this.latitude = latitude;
+	}
+
+	public double getLongitude()
+	{
+		return longitude;
+	}
+
+	public void setLongitude(double longitude)
+	{
+		this.longitude = longitude;
 	}
 }

@@ -16,8 +16,13 @@ import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -36,18 +41,25 @@ public class Tidtabell extends ListActivity
 	Vector<Stop> mStops;
 	StopListAdapter mListAdapter;
 
+	SensorManager mSensorManager;
+	Sensor mSensor;
+	float[] mOrientation = {0,0,0};
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		
+
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+
 		mDb = new DatabaseOpenHelper(this);
 		mFavoriteStops = mDb.getAllFavourites();
 		mStops = mkStopList(mFavoriteStops);
-		mListAdapter = new StopListAdapter(this, mStops);
+		mListAdapter = new StopListAdapter(this, mStops, mOrientation);
 		setListAdapter(mListAdapter);
-		
+
 		ListView listView = getListView();
 		
 		listView.setOnItemClickListener(new OnItemClickListener() {
@@ -62,6 +74,22 @@ public class Tidtabell extends ListActivity
 	            startActivity(intent);
             }
 		});
+	}
+	
+	
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		mSensorManager.registerListener(mSensorListener, mSensor,
+                SensorManager.SENSOR_DELAY_UI);
+	}
+	
+	@Override
+	public void onPause()
+	{
+		mSensorManager.unregisterListener(mSensorListener);
+		super.onPause();
 	}
 	
 	@Override
@@ -159,4 +187,21 @@ public class Tidtabell extends ListActivity
 		
 		return stops;
 	}
+	
+	private final SensorEventListener mSensorListener = new SensorEventListener() {
+		
+		@Override
+		public void onSensorChanged(SensorEvent event)
+		{
+			for (int i=0; i<mOrientation.length; i++)
+				mOrientation[i] = event.values[i];
+			
+			mListAdapter.notifyDataSetChanged();
+		}
+
+		@Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy)
+        {
+        }
+	};
 }

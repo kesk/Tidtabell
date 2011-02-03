@@ -51,7 +51,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper
 	{
 		SQLiteDatabase db = getWritableDatabase();
 		String selection = STATION_ID + " = ?";
-		String[] args = { stop.id };
+		String[] args = { stop.getId() };
 		db.delete(TABLE_NAME, selection, args);
 		db.close();
 	}

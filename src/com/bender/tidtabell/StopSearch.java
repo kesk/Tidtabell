@@ -15,14 +15,24 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import coordinatetransformation.Position;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,13 +56,20 @@ public class StopSearch extends ListActivity
 	private StopListAdapter mListAdapter;
 	private Vector<Stop> mStops = new Vector<Stop>();
 	private QueryRunner mQueryRunner;
-	
-    @Override
+
+	SensorManager mSensorManager;
+	Sensor mSensor;
+	float[] mOrientation = {0,0,0};
+
+	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		mListAdapter = new StopListAdapter(this, mStops);
+		mListAdapter = new StopListAdapter(this, mStops, mOrientation);
 		setListAdapter(mListAdapter);
+
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 
 		Intent intent = getIntent();
 
@@ -117,6 +134,21 @@ public class StopSearch extends ListActivity
 			new Thread(mQueryRunner).start();
 		}
 	}
+	
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		mSensorManager.registerListener(mSensorListener, mSensor,
+                SensorManager.SENSOR_DELAY_UI);
+	}
+	
+	@Override
+	public void onPause()
+	{
+		mSensorManager.unregisterListener(mSensorListener);
+		super.onPause();
+	}
 
 	@Override
 	public void onSaveInstanceState(Bundle outState)
@@ -145,7 +177,8 @@ public class StopSearch extends ListActivity
 	@Override
 	public Object onRetainNonConfigurationInstance()
 	{
-		if (mQueryRunner == null || mQueryRunner.getStatus() == QueryRunner.STATE_RUNNNING)
+		if (mQueryRunner == null
+		        || mQueryRunner.getStatus() == QueryRunner.STATE_RUNNNING)
 			return mQueryRunner;
 		else
 			return null;
@@ -194,5 +227,20 @@ public class StopSearch extends ListActivity
 				break;
 			}
 		}
+	};
+
+	private final SensorEventListener mSensorListener = new SensorEventListener() {
+		
+		@Override
+		public void onSensorChanged(SensorEvent event)
+		{
+			for (int i=0; i<mOrientation.length; i++)
+				mOrientation[i] = event.values[i];
+		}
+
+		@Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy)
+        {
+        }
 	};
 }
