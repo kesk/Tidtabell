@@ -2,12 +2,14 @@ package com.bender.tidtabell;
 
 import java.io.Serializable;
 
+import android.location.Location;
+
 public class Stop implements Serializable
 {
 	private static final long serialVersionUID = 2466085735607712099L;
 
 	String id, name, friendlyName, county;
-	double latitude, longitude;
+	float latitude, longitude;
 
 	public String getId()
 	{
@@ -49,23 +51,23 @@ public class Stop implements Serializable
 		this.county = county;
 	}
 
-	public double getLatitude()
+	public float getLatitude()
 	{
 		return latitude;
 	}
 
 	public void setLatitude(double latitude)
 	{
-		this.latitude = latitude;
+		this.latitude = (float) latitude;
 	}
 
-	public double getLongitude()
+	public float getLongitude()
 	{
 		return longitude;
 	}
 
 	public void setLongitude(double longitude)
 	{
-		this.longitude = longitude;
+		this.longitude = (float) longitude;
 	}
 }

@@ -28,9 +28,11 @@ public class NextTripHandler extends DefaultHandler
 	public void startElement(String uri, String localName, String qName,
 	        Attributes attributes) throws SAXException
 	{
-		if (qName.equalsIgnoreCase("forecast"))
+		// <forecast>
+		if (!inForecast && qName.equalsIgnoreCase("forecast"))
 			inForecast = true;
-		else if (inForecast && qName.equalsIgnoreCase("item"))
+		// <item>
+		else if (inForecast && !inItem && qName.equalsIgnoreCase("item"))
 		{
 			inItem = true;
 			currentDeparture = new Departure();
@@ -64,14 +66,14 @@ public class NextTripHandler extends DefaultHandler
 			int[] timeArray = parseTime(timeString);
 			GregorianCalendar date = new GregorianCalendar(
 			        TimeZone.getTimeZone("Europe/Stockholm"));
-			date.set(timeArray[0], timeArray[1] - 1, // -1 because January = 0
-			        timeArray[2], timeArray[3], timeArray[4], timeArray[5]);
+			date.set(timeArray[0], timeArray[1] - 1, timeArray[2],
+			        timeArray[3], timeArray[4], timeArray[5]);
 			currentDeparture.setTime(date);
 		}
-		else if (inForecast && inItem && qName.equalsIgnoreCase("destination"))
-		{
+		// <destination>
+		else if (inForecast && inItem && !inDestination
+		        && qName.equalsIgnoreCase("destination"))
 			inDestination = true;
-		}
 	}
 
 	@Override

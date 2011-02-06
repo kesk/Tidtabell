@@ -6,6 +6,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
 import coordinatetransformation.positions.RT90Position;
+import coordinatetransformation.positions.RT90Position.RT90Projection;
+import coordinatetransformation.positions.WGS84Position;
 
 public class StopSearchHandler extends DefaultHandler
 {
@@ -58,9 +60,10 @@ public class StopSearchHandler extends DefaultHandler
     				// Location
     				double rt90X = new Double(attributes.getValue(RT90_X));
     				double rt90Y = new Double(attributes.getValue(RT90_Y));
-    				RT90Position rt90Pos = new RT90Position(rt90X, rt90Y);
-    				mCurrentStop.setLatitude(rt90Pos.getLatitude());
-    				mCurrentStop.setLongitude(rt90Pos.getLongitude());
+    				RT90Position rt90Pos = new RT90Position(rt90X, rt90Y, RT90Projection.rt90_2_5_gon_v);
+    				WGS84Position wgs84Pos = rt90Pos.toWGS84();
+    				mCurrentStop.setLatitude(wgs84Pos.getLatitude());
+    				mCurrentStop.setLongitude(wgs84Pos.getLongitude());
     			}
 			}
 			// <items>

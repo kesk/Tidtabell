@@ -13,7 +13,7 @@ public class DirectionNeedle extends View
 	private Paint mPaint = new Paint();
 	private Path mPath = new Path();
 	int mWidth = 0, mHeight = 0;
-	float[] mOrientation;
+	float mOrientation = 0;
 	
 	public DirectionNeedle(Context context, AttributeSet attrs, int defStyle)
     {
@@ -54,8 +54,7 @@ public class DirectionNeedle extends View
         // Scale it down
         canvas.scale(0.2f, 0.2f);
         
-        if (mOrientation != null)
-        	canvas.rotate(-mOrientation[0]);
+        canvas.rotate(-mOrientation);
         
         canvas.drawPath(mPath, mPaint);
 	}
@@ -69,7 +68,7 @@ public class DirectionNeedle extends View
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 	}
 	
-	public void setOrientation(float[] orientation)
+	public void setOrientation(float orientation)
 	{
 		mOrientation = orientation;
 	}

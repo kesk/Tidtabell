@@ -57,17 +57,18 @@ public class StopSearch extends ListActivity
 	private Vector<Stop> mStops = new Vector<Stop>();
 	private QueryRunner mQueryRunner;
 
+	LocationManager mLocationManager;
 	SensorManager mSensorManager;
 	Sensor mSensor;
-	float[] mOrientation = {0,0,0};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		mListAdapter = new StopListAdapter(this, mStops, mOrientation);
+		mListAdapter = new StopListAdapter(this, mStops);
 		setListAdapter(mListAdapter);
 
+		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 
@@ -139,14 +140,17 @@ public class StopSearch extends ListActivity
 	public void onResume()
 	{
 		super.onResume();
-		mSensorManager.registerListener(mSensorListener, mSensor,
+		//mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mListAdapter.mLocationListener);
+		mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, mListAdapter.mLocationListener);
+		mSensorManager.registerListener(mListAdapter.mSensorEventListener, mSensor,
                 SensorManager.SENSOR_DELAY_UI);
 	}
 	
 	@Override
 	public void onPause()
 	{
-		mSensorManager.unregisterListener(mSensorListener);
+		mLocationManager.removeUpdates(mListAdapter.mLocationListener);
+		mSensorManager.unregisterListener(mListAdapter.mSensorEventListener);
 		super.onPause();
 	}
 
@@ -227,20 +231,5 @@ public class StopSearch extends ListActivity
 				break;
 			}
 		}
-	};
-
-	private final SensorEventListener mSensorListener = new SensorEventListener() {
-		
-		@Override
-		public void onSensorChanged(SensorEvent event)
-		{
-			for (int i=0; i<mOrientation.length; i++)
-				mOrientation[i] = event.values[i];
-		}
-
-		@Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy)
-        {
-        }
 	};
 }
