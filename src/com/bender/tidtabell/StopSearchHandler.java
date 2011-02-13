@@ -1,6 +1,6 @@
 package com.bender.tidtabell;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
@@ -24,61 +24,55 @@ public class StopSearchHandler extends DefaultHandler
 	private boolean mInSuggestions = false, mInItems = false, mInItem = false,
 	        mInStopName = false, mInFriendlyName = false, mInCounty = false;
 
-	private Vector<Stop> mStops = new Vector<Stop>();
+	private ArrayList<Stop> mStops = new ArrayList<Stop>();
 	private Stop mCurrentStop;
 
 	@Override
 	public void startElement(String uri, String localName, String qName,
 	        Attributes attributes)
 	{
-		if (mInSuggestions)
+		// <items>
+		if (!mInItems && qName.equalsIgnoreCase(ITEMS))
+			mInItems = true;
+		else if (mInItems)
 		{
-			if (mInItems)
+			// <item>
+			if (!mInItem && qName.equalsIgnoreCase(ITEM))
 			{
-    			if (mInItem)
-    			{
-    				// <stop_name>
-    				if (qName.equalsIgnoreCase(STOP_NAME))
-    					mInStopName = true;
-    				// <friendly_name>
-    				else if (qName.equals(FRIENDLY_NAME))
-    					mInFriendlyName = true;
-    				// <county>
-    				else if (qName.equalsIgnoreCase(COUNTY))
-    					mInCounty = true;
-    			}
-    			// <item>
-    			else if (qName.equalsIgnoreCase(ITEM))
-    			{
-    				mInItem = true;
-    				mCurrentStop = new Stop();
-    
-    				// ID
-    				String id = attributes.getValue(STOP_ID);
-    				mCurrentStop.setId(id);
-    
-    				// Location
-    				double rt90X = new Double(attributes.getValue(RT90_X));
-    				double rt90Y = new Double(attributes.getValue(RT90_Y));
-    				RT90Position rt90Pos = new RT90Position(rt90X, rt90Y, RT90Projection.rt90_2_5_gon_v);
-    				WGS84Position wgs84Pos = rt90Pos.toWGS84();
-    				mCurrentStop.setLatitude(wgs84Pos.getLatitude());
-    				mCurrentStop.setLongitude(wgs84Pos.getLongitude());
-    			}
+				mInItem = true;
+				mCurrentStop = new Stop();
+
+				// ID
+				String id = attributes.getValue(STOP_ID);
+				mCurrentStop.setId(id);
+
+				// Location
+				double rt90X = new Double(attributes.getValue(RT90_X));
+				double rt90Y = new Double(attributes.getValue(RT90_Y));
+				RT90Position rt90Pos = new RT90Position(rt90X, rt90Y,
+				        RT90Projection.rt90_2_5_gon_v);
+				WGS84Position wgs84Pos = rt90Pos.toWGS84();
+				mCurrentStop.setLatitude(wgs84Pos.getLatitude());
+				mCurrentStop.setLongitude(wgs84Pos.getLongitude());
 			}
-			// <items>
-			else if (qName.equalsIgnoreCase(ITEMS))
-				mInItems = true;
+			else if (mInItem)
+			{
+				if (!mInStopName && qName.equalsIgnoreCase(STOP_NAME))
+					mInStopName = true;
+				// <friendly_name>
+				else if (!mInStopName && qName.equals(FRIENDLY_NAME))
+					mInFriendlyName = true;
+				// <county>
+				else if (!mInStopName && qName.equalsIgnoreCase(COUNTY))
+					mInCounty = true;
+			}
 		}
-		// <suggestions>
-		else if (qName.equalsIgnoreCase(SUGGESTIONS))
-			mInSuggestions = true;
 	}
 
 	@Override
 	public void characters(char[] ch, int start, int length)
 	{
-		if (mInSuggestions && mInItems && mInItem)
+		if (mInItems && mInItem)
 		{
 			if (mInStopName)
 				mCurrentStop.setName(new String(ch, start, length));
@@ -92,43 +86,34 @@ public class StopSearchHandler extends DefaultHandler
 	@Override
 	public void endElement(String uri, String localName, String qName)
 	{
-		if (mInSuggestions)
+		// </items>
+		if (mInItems && qName.equalsIgnoreCase(ITEMS))
+			mInItems = false;
+		else if (mInItems && mInItem)
 		{
-			// </suggestions>
-			if (qName.equalsIgnoreCase(SUGGESTIONS))
-				mInSuggestions = false;
-			else if (mInItems)
+			// </item>
+			if (qName.equalsIgnoreCase(ITEM))
 			{
-				// </items>
-				if (qName.equalsIgnoreCase(ITEMS))
-					mInItems = false;
-				else if (mInItem)
-    			{
-        			// </item>
-        			if (qName.equalsIgnoreCase(ITEM))
-        			{
-        				mInItem = false;
-        				if (!mParseFail)
-        					mStops.add(mCurrentStop);
-        				mCurrentStop = null;
-        				mParseFail = false;
-        			}
-    				// </stop_name>
-        			else if (mInStopName && qName.equalsIgnoreCase(STOP_NAME))
-    					mInStopName = false;
-    				// </friendly_name>
-    				else if (mInFriendlyName && qName.equalsIgnoreCase(FRIENDLY_NAME))
-    					mInFriendlyName = false;
-    				// </county>
-    				else if (mInCounty && qName.equalsIgnoreCase(COUNTY))
-    					mInCounty = false;
-    			}
+				mInItem = false;
+				if (!mParseFail)
+					mStops.add(mCurrentStop);
+				mCurrentStop = null;
+				mParseFail = false;
 			}
+			// </stop_name>
+			else if (mInStopName && qName.equalsIgnoreCase(STOP_NAME))
+				mInStopName = false;
+			// </friendly_name>
+			else if (mInFriendlyName && qName.equalsIgnoreCase(FRIENDLY_NAME))
+				mInFriendlyName = false;
+			// </county>
+			else if (mInCounty && qName.equalsIgnoreCase(COUNTY))
+				mInCounty = false;
 		}
 	}
 
-	public Vector<Stop> getStops()
+	public Stop[] getStops()
 	{
-		return mStops;
+		return mStops.toArray(new Stop[mStops.size()]);
 	}
 }

@@ -10,19 +10,22 @@ import android.view.View;
 
 public class DirectionNeedle extends View
 {
+	public static final int COLOR_ACTIVE = Color.parseColor("#FF9ABC0D");
+	public static final int COLOR_INACTIVE = Color.argb(255, 255, 0, 0);
+	private int mColor = COLOR_INACTIVE;
 	private Paint mPaint = new Paint();
 	private Path mPath = new Path();
 	int mWidth = 0, mHeight = 0;
-	float mOrientation = 0;
+	float mRotation = 0;
 	
 	public DirectionNeedle(Context context, AttributeSet attrs, int defStyle)
     {
 	    super(context, attrs, defStyle);
 	    
-        mPath.moveTo(0, -50);
-        mPath.lineTo(-20, 60);
-        mPath.lineTo(0, 50);
-        mPath.lineTo(20, 60);
+        mPath.moveTo(0, -35);
+        mPath.lineTo(-10, 30);
+        mPath.lineTo(0, 40);
+        mPath.lineTo(10, 30);
         mPath.close();
     }
 	
@@ -43,7 +46,7 @@ public class DirectionNeedle extends View
 		canvas.drawColor(Color.TRANSPARENT);
 
         mPaint.setAntiAlias(true);
-        mPaint.setColor(Color.WHITE);
+        mPaint.setColor(mColor);
         mPaint.setStyle(Paint.Style.FILL);
         
         // Center position
@@ -52,9 +55,9 @@ public class DirectionNeedle extends View
         canvas.translate(x, y);
         
         // Scale it down
-        canvas.scale(0.2f, 0.2f);
+        canvas.scale(0.4f, 0.4f);
         
-        canvas.rotate(-mOrientation);
+        canvas.rotate(-mRotation);
         
         canvas.drawPath(mPath, mPaint);
 	}
@@ -68,8 +71,18 @@ public class DirectionNeedle extends View
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 	}
 	
-	public void setOrientation(float orientation)
+	public void setRotation(float rotation)
 	{
-		mOrientation = orientation;
+		mRotation = rotation;
+	}
+	
+	public void setActive(boolean b)
+	{
+		if (b)
+			mColor = COLOR_ACTIVE;
+		else
+			mColor = COLOR_INACTIVE;
+		
+		invalidate();
 	}
 }

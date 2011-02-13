@@ -9,4 +9,12 @@
 <string name="main_saved_stops">-hållplatser</string>
 <string name="add_favorite_toast">Hållplatsen har lagts till som favorit.</string>
 <string name="remove_favorite_toast">Hållplatsen har tagits bort som favorit.</string>
+<string name="menu_home">Hem</string>
+<string name="menu_refresh">Uppdatera</string>
+<string name="menu_proximity_search">Sök närliggande hållplatser</string>
+<string name="title_next_trip">Nästa tur</string>
+<string name="title_closest_stops">Närmaste hållplatserna</string>
+<string name="error_margin">Felmarginal:</string>
+<string name="traffic_island">Läge:</string>
+<string name="now">nu</string>
 </resources>

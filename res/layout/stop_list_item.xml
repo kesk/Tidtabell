@@ -1,25 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<TableLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="fill_parent"
-  android:layout_height="50dp"
-  android:layout_margin="5dp">
+  android:layout_height="fill_parent"
+  android:shrinkColumns="0"
+  android:stretchColumns="0">
   
-  <TextView
-    android:id="@+id/stop_name"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerVertical="true"
-    android:textSize="13pt"/>
+  <TableRow>
+    <RelativeLayout
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center_vertical">
     
-  <com.bender.tidtabell.DirectionNeedle
-    android:id="@+id/direction_needle"
-    android:layout_width="50dp"
-    android:layout_height="50dp"
-    android:layout_toRightOf="@id/stop_name"/>
-    
-  <!--<TextView
-    android:id="@+id/distance"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"/>-->
-</RelativeLayout>
+      <TextView
+        android:id="@+id/stop_name"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:padding="5dp"
+        android:textSize="13pt"
+        android:text="Test test test test test test"/>
+        
+      <TextView
+        android:id="@+id/county"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/stop_name"
+        android:layout_alignLeft="@id/stop_name"
+        android:paddingLeft="5dp"
+        android:paddingBottom="5dp"
+        android:text="County"
+        android:textSize="7pt"/>
+    </RelativeLayout>
+  
+    <RelativeLayout
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center_vertical">
+      
+      <com.bender.tidtabell.DirectionNeedle
+        android:id="@+id/direction_needle"
+        android:layout_width="50dp"
+        android:layout_height="50dp"/>
+        
+      <TextView
+        android:id="@+id/distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/direction_needle"
+        android:text="--"/>
+    </RelativeLayout>  
+  </TableRow>
+</TableLayout>

@@ -7,7 +7,7 @@
   <RelativeLayout
     android:id="@+id/next_trip_header"
     android:layout_width="fill_parent"
-    android:layout_height="45dp"
+    android:layout_height="wrap_content"
     android:background="@drawable/gradient">
 
     <ToggleButton

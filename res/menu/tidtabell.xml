@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-  <item android:title="@string/menu_stop_search"
-    android:icon="@android:drawable/ic_menu_search" android:id="@+id/menu_search"></item>
+<menu 
+  xmlns:android="http://schemas.android.com/apk/res/android">
+  
+  <item
+    android:id="@+id/menu_search" 
+    android:title="@string/menu_stop_search"
+    android:icon="@drawable/ic_menu_search"/>
+    
+  <item
+    android:id="@+id/menu_proximity_search"
+    android:title="@string/menu_proximity_search"/>
 </menu>

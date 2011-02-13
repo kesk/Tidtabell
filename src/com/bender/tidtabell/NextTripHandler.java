@@ -1,8 +1,8 @@
 package com.bender.tidtabell;
 
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +22,7 @@ public class NextTripHandler extends DefaultHandler
 	        .compile("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}");
 
 	private Departure currentDeparture;
-	private Vector<Departure> departureList = new Vector<Departure>();
+	private ArrayList<Departure> departureList = new ArrayList<Departure>();
 
 	@Override
 	public void startElement(String uri, String localName, String qName,
@@ -54,21 +54,29 @@ public class NextTripHandler extends DefaultHandler
 			currentDeparture.setLineForegroundColor(foreground);
 			currentDeparture.setLineBackgroundColor(background);
 
-			// Set departure time
-			String timeString = attributes.getValue("next_trip_forecast_time");
+			// Set next departure time
+			String next = attributes.getValue("next_trip_forecast_time");
 			// Check that timeString has the right format
-			Matcher m = TIME_PATTERN.matcher(timeString);
-			if (timeString == null || !m.matches())
+			Matcher m1 = TIME_PATTERN.matcher(next);
+			if (next == null || !m1.matches())
 			{
 				parseError = true;
 				return;
 			}
-			int[] timeArray = parseTime(timeString);
-			GregorianCalendar date = new GregorianCalendar(
-			        TimeZone.getTimeZone("Europe/Stockholm"));
-			date.set(timeArray[0], timeArray[1] - 1, timeArray[2],
-			        timeArray[3], timeArray[4], timeArray[5]);
-			currentDeparture.setTime(date);
+			currentDeparture.setTime(parseTime(next));
+			
+			// next next trip
+			String nextNext = attributes.getValue("next_next_trip_forecast_time");
+			if (nextNext != null)
+			{
+				Matcher m2 = TIME_PATTERN.matcher(nextNext);
+				if (m2.matches())
+					currentDeparture.SetTimeNext(parseTime(nextNext));
+			}
+
+			// Traffic island
+			String island = attributes.getValue("traffic_island");
+			currentDeparture.setTrafficIsland(island);
 		}
 		// <destination>
 		else if (inForecast && inItem && !inDestination
@@ -104,12 +112,12 @@ public class NextTripHandler extends DefaultHandler
 			inDestination = false;
 	}
 
-	public Vector<Departure> getDepartureList()
+	public Departure[] getDepartureList()
 	{
-		return departureList;
+		return departureList.toArray(new Departure[departureList.size()]);
 	}
 
-	private int[] parseTime(String s)
+	private GregorianCalendar parseTime(String s)
 	{
 		int[] time = new int[6];
 
@@ -131,6 +139,10 @@ public class NextTripHandler extends DefaultHandler
 		// seconds
 		time[5] = Integer.parseInt(s.substring(17, 19));
 
-		return time;
+		GregorianCalendar date = new GregorianCalendar(
+		        TimeZone.getTimeZone("Europe/Stockholm"));
+		date.set(time[0], time[1] - 1, time[2], time[3], time[4], time[5]);
+
+		return date;
 	}
 }

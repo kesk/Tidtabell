@@ -11,7 +11,8 @@ public class Departure implements Serializable
 	private int[] mLineForegroundColor = { 255, 255, 255, 255 };
 	private int[] mLineBackgroundColor = { 0, 0, 0, 0 };
 	private String mDestination;
-	private GregorianCalendar mTime;
+	private GregorianCalendar mTime, mTimeNext;
+	private String mTrafficIsland;
 
 	public void setLine(String line)
 	{
@@ -42,6 +43,16 @@ public class Departure implements Serializable
 	{
 		return mTime;
 	}
+	
+	public void SetTimeNext(GregorianCalendar date)
+	{
+		this.mTimeNext = date;
+	}
+	
+	public GregorianCalendar getTimeNext()
+	{
+		return mTimeNext;
+	}
 
 	public void setLineForegroundColor(String lineForegroundColor)
 	{
@@ -71,5 +82,15 @@ public class Departure implements Serializable
 	public int[] getLineBackgroundColor()
 	{
 		return mLineBackgroundColor;
+	}
+	
+	public void setTrafficIsland(String trafficIsland)
+	{
+		mTrafficIsland = trafficIsland;
+	}
+	
+	public String getTrafficIsland()
+	{
+		return mTrafficIsland;
 	}
 }

@@ -2,13 +2,12 @@ package com.bender.tidtabell;
 
 import java.io.Serializable;
 
-import android.location.Location;
-
 public class Stop implements Serializable
 {
 	private static final long serialVersionUID = 2466085735607712099L;
 
 	String id, name, friendlyName, county;
+
 	float latitude, longitude;
 
 	public String getId()

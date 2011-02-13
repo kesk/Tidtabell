@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="query_runner_unknown">Något gick fel i kommunikationen med Västtrafiks servrar.</string>
+<string name="query_runner_parse_error">Kunde tyda svaret från Västtrafik.</string>
+<string name="query_runner_io_error">IO error during parse.</string>
+<string name="query_runner_timeout">Västtrafiks server svarar inte. Försök igen senare.</string>
+<string name="error">Error</string>
+<string name="query_runner_connection_failed">Gick inte att ansluta till Västtrafiks server.</string>
+</resources>

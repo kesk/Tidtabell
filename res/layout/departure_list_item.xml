@@ -1,39 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge
+<TableLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content">
+  android:shrinkColumns="1"
+  android:stretchColumns="1">
   
-  <TextView
-    android:id="@+id/line_number"
-    android:layout_width="60dp"
-    android:layout_height="60dp"
-    android:layout_margin="10dp"
-    android:layout_alignParentLeft="true"
-    android:layout_centerVertical="true"
-    android:gravity="center"
-    android:textSize="20pt"
-    android:textStyle="bold"/>
-    
-  <RelativeLayout
-    android:layout_gravity="center"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_toRightOf="@id/line_number"
-    android:layout_centerVertical="true">
-  
+  <TableRow>
     <TextView
-      android:id="@+id/destination"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentTop="true"
-      android:textSize="12pt"/>
+      android:id="@+id/line_number"
+      android:layout_width="60dp"
+      android:layout_height="60dp"
+      android:layout_marginLeft="10dp"
+      android:layout_marginRight="10dp"
+      android:layout_marginTop="3dp"
+      android:layout_marginBottom="3dp"
+      android:layout_alignParentLeft="true"
+      android:layout_centerVertical="true"
+      android:layout_gravity="center_vertical"
+      android:gravity="center"
+      android:textSize="20pt"
+      android:textStyle="bold"/>
       
-    <TextView
-      android:id="@+id/timeLeft"
+    <RelativeLayout
+      android:layout_gravity="center_vertical"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_below="@id/destination"
-      android:textSize="8pt"/>
-  </RelativeLayout>
-</merge>
+      android:layout_toRightOf="@id/line_number">
+    
+      <TextView
+        android:id="@+id/destination"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:textSize="12pt"
+        android:text="Test"/>
+        
+      <TextView
+        android:id="@+id/time_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/destination"
+        android:textSize="8pt"/>
+        
+      <TextView
+        android:id="@+id/time_left_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/time_left"
+        android:layout_alignBaseline="@id/time_left"
+        android:layout_marginLeft="10dp"
+        android:textSize="8pt"/>
+        
+      <TextView
+        android:id="@+id/traffic_island"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/destination"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="7dp"
+        android:text="A"
+        android:textSize="8pt"/>
+        
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/traffic_island"
+        android:layout_alignBaseline="@id/traffic_island"
+        android:paddingRight="5dp"
+        android:text="@string/traffic_island"
+        android:textSize="8pt"/>
+    </RelativeLayout>
+  </TableRow>
+</TableLayout>
