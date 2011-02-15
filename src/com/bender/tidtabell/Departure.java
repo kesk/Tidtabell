@@ -2,16 +2,18 @@ package com.bender.tidtabell;
 
 import java.io.Serializable;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 public class Departure implements Serializable
 {
 	private static final long serialVersionUID = 964593260545572076L;
-	
+
 	private String mLine;
 	private int[] mLineForegroundColor = { 255, 255, 255, 255 };
 	private int[] mLineBackgroundColor = { 0, 0, 0, 0 };
 	private String mDestination;
-	private GregorianCalendar mTime, mTimeNext;
+	private GregorianCalendar mNextForecast = null, mNextNextForecast = null,
+	        mNextPlanned = null, mNextNextPlanned = null;
 	private String mTrafficIsland;
 
 	public void setLine(String line)
@@ -34,24 +36,48 @@ public class Departure implements Serializable
 		return mDestination;
 	}
 
-	public void setTime(GregorianCalendar date)
+	public void setNextForecast(String nextForecast)
 	{
-		this.mTime = date;
+		if (!nextForecast.equals("0001-01-01T00:00:00"))
+			mNextForecast = parseTime(nextForecast);
 	}
 
-	public GregorianCalendar getTime()
+	public GregorianCalendar getNextForecast()
 	{
-		return mTime;
+		return mNextForecast;
 	}
-	
-	public void SetTimeNext(GregorianCalendar date)
+
+	public void setNextNextForecast(String nextNextForecast)
 	{
-		this.mTimeNext = date;
+		if (!nextNextForecast.equals("0001-01-01T00:00:00"))
+			mNextNextForecast = parseTime(nextNextForecast);
 	}
-	
-	public GregorianCalendar getTimeNext()
+
+	public GregorianCalendar getNextNextForecast()
 	{
-		return mTimeNext;
+		return mNextNextForecast;
+	}
+
+	public void setNextPlanned(String nextPlanned)
+	{
+		if (!nextPlanned.equals("0001-01-01T00:00:00"))
+			mNextPlanned = parseTime(nextPlanned);
+	}
+
+	public GregorianCalendar getNextPlanned()
+	{
+		return mNextPlanned;
+	}
+
+	public void setNextNextPlanned(String nextNextPlanned)
+	{
+		if (!nextNextPlanned.equals("0001-01-01T00:00:00"))
+			mNextNextPlanned = parseTime(nextNextPlanned);
+	}
+
+	public GregorianCalendar getNextNextPlanned()
+	{
+		return mNextNextPlanned;
 	}
 
 	public void setLineForegroundColor(String lineForegroundColor)
@@ -83,14 +109,43 @@ public class Departure implements Serializable
 	{
 		return mLineBackgroundColor;
 	}
-	
+
 	public void setTrafficIsland(String trafficIsland)
 	{
 		mTrafficIsland = trafficIsland;
 	}
-	
+
 	public String getTrafficIsland()
 	{
 		return mTrafficIsland;
+	}
+
+	private GregorianCalendar parseTime(String s)
+	{
+		int[] time = new int[6];
+
+		// year
+		time[0] = Integer.parseInt(s.substring(0, 4));
+
+		// month
+		time[1] = Integer.parseInt(s.substring(5, 7));
+
+		// day
+		time[2] = Integer.parseInt(s.substring(8, 10));
+
+		// hours
+		time[3] = Integer.parseInt(s.substring(11, 13));
+
+		// minutes
+		time[4] = Integer.parseInt(s.substring(14, 16));
+
+		// seconds
+		time[5] = Integer.parseInt(s.substring(17, 19));
+
+		GregorianCalendar date = new GregorianCalendar(
+		        TimeZone.getTimeZone("Europe/Stockholm"));
+		date.set(time[0], time[1] - 1, time[2], time[3], time[4], time[5]);
+
+		return date;
 	}
 }

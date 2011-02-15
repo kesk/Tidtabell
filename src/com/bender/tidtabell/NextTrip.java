@@ -38,6 +38,7 @@ public class NextTrip extends ListActivity
 	private Stop mStop;
 	private Departure[] mDepartures = new Departure[0];
 	private QueryRunner mQueryRunner;
+	private final PeriodicUpdates mPeriodicUpdates = new PeriodicUpdates();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -45,7 +46,7 @@ public class NextTrip extends ListActivity
 		super.onCreate(savedInstanceState);
 		setTitle(R.string.title_next_trip);
 		setContentView(R.layout.next_trip);
-		
+
 		// This activity needs a stop to show, stop if none was sent with the
 		// intent.
 		Bundle b = getIntent().getExtras();
@@ -72,7 +73,7 @@ public class NextTrip extends ListActivity
 				break;
 			default:
 				break;
-			}	
+			}
 		}
 		// If this is a restored activity show departures saved from that
 		// instance.
@@ -86,7 +87,7 @@ public class NextTrip extends ListActivity
 		{
 			runQuery();
 		}
-		
+
 		mListAdapter = new DepartureListAdapter(this, mDepartures);
 		setListAdapter(mListAdapter);
 
@@ -124,22 +125,28 @@ public class NextTrip extends ListActivity
 			}
 		});
 	}
-	
+
 	@Override
 	protected void onResume()
 	{
 		super.onResume();
 		mDbCursor.requery();
 		mFavToggle.setChecked(mDbCursor.moveToFirst());
+		
+		//Start the periodic updater
+		new Thread(mPeriodicUpdates).start();
 	}
-	
+
 	@Override
 	protected void onPause()
 	{
 		mDbCursor.deactivate();
+		
+		// Stop periodic updates
+		mPeriodicUpdates.stopThread = true;
 		super.onPause();
 	}
-	
+
 	@Override
 	protected void onDestroy()
 	{
@@ -148,10 +155,19 @@ public class NextTrip extends ListActivity
 	}
 
 	@Override
+	protected void onSaveInstanceState(Bundle outState)
+	{
+		if (mDepartures != null)
+			outState.putSerializable("departures", mDepartures);
+
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
 	public Dialog onCreateDialog(int id, Bundle bundle)
 	{
 		ProgressDialog dialog;
-		
+
 		switch (id)
 		{
 		case DIALOG_PROGRESS:
@@ -172,15 +188,17 @@ public class NextTrip extends ListActivity
 			int errMsg = bundle.getInt("message");
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
 			builder.setTitle("Error")
-			.setMessage(errMsg)
-			.setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which)
-				{
-					dismissDialog(DIALOG_ERROR);
-					finish();
-				}
-			});
+			        .setMessage(errMsg)
+			        .setNeutralButton(R.string.ok,
+			                new DialogInterface.OnClickListener() {
+				                @Override
+				                public void onClick(DialogInterface dialog,
+				                        int which)
+				                {
+					                dismissDialog(DIALOG_ERROR);
+					                finish();
+				                }
+			                });
 			return builder.create();
 		default:
 			return null;
@@ -217,21 +235,12 @@ public class NextTrip extends ListActivity
 	}
 
 	@Override
-	protected void onSaveInstanceState(Bundle outState)
-	{
-		if (mDepartures != null)
-			outState.putSerializable("departures", mDepartures);
-		
-		super.onSaveInstanceState(outState);
-	}
-
-	@Override
 	public Object onRetainNonConfigurationInstance()
 	{
 		return mQueryRunner;
 	}
 
- 	final Handler mMsgHandler = new Handler() {
+	final Handler mMsgHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg)
 		{
@@ -253,6 +262,28 @@ public class NextTrip extends ListActivity
 		}
 	};
 	
+	// Periodic updates of the list
+	private class PeriodicUpdates implements Runnable
+	{
+		volatile boolean stopThread = false;
+		
+		@Override
+		public void run()
+		{
+			while (!stopThread)
+			{
+				try
+				{
+					Thread.sleep(20 * 1000);
+					mListAdapter.notifyDataSetChanged();
+				}
+				catch (InterruptedException e)
+				{
+				}
+			}
+		}
+	}
+
 	private void runQuery()
 	{
 		String url = NEXT_TRIP_URL + "&stopId=" + mStop.getId();

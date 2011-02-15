@@ -165,8 +165,8 @@ public class StopSearch extends ListActivity
 	public void onResume()
 	{
 		super.onResume();
-		// mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-		// 0, 0, mListAdapter.mLocationListener);
+		mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+		        0, 0, mListAdapter.mLocationListener);
 		mLocationManager.requestLocationUpdates(
 		        LocationManager.NETWORK_PROVIDER, 0, 0,
 		        mListAdapter.mLocationListener);
@@ -178,10 +178,11 @@ public class StopSearch extends ListActivity
 		// Proximity search
 		if (mProximitySearch)
 		{
+			mLocationManager
+			        .requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+			                0, 200, mLocationListener);
 			mLocationManager.requestLocationUpdates(
-			        LocationManager.NETWORK_PROVIDER, 0, 500, mLocationListener);
-			mLocationManager.requestLocationUpdates(
-			        LocationManager.GPS_PROVIDER, 0, 500, mLocationListener);
+			        LocationManager.GPS_PROVIDER, 0, 200, mLocationListener);
 		}
 	}
 
@@ -193,7 +194,7 @@ public class StopSearch extends ListActivity
 
 		if (mProximitySearch)
 			mLocationManager.removeUpdates(mLocationListener);
-		
+
 		super.onPause();
 	}
 

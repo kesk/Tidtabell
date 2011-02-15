@@ -4,13 +4,11 @@ import java.util.GregorianCalendar;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.net.TrafficStats;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
@@ -58,10 +56,26 @@ public class DepartureListAdapter extends BaseAdapter
 		dli.setLineForegroundColor(departure.getLineForegroundColor());
 		dli.setLineBackgroundColor(departure.getLineBackgroundColor());
 		dli.setDestination(departure.getDestination());
-		dli.setTime(departure.getTime());
-		if (departure.getTimeNext().compareTo(new GregorianCalendar()) > 0)
-			dli.setTimeNext(departure.getTimeNext());
 		dli.setTrafficIsland(departure.getTrafficIsland());
+		
+		String next, nextNext;
+		
+		if (departure.getNextForecast() != null)
+			next = mkTimeString(departure.getNextForecast());
+		else if (departure.getNextPlanned() != null)
+			next = "~" + mkTimeString(departure.getNextPlanned());
+		else 
+			next = "";
+		
+		if (departure.getNextNextForecast() != null)
+			nextNext = "(" + mkTimeString(departure.getNextNextForecast()) + ")";
+		else if (departure.getNextNextPlanned() != null)
+			nextNext = "(~" + mkTimeString(departure.getNextNextPlanned()) + ")";
+		else
+			nextNext = "";
+		
+		dli.setNextTime(next);
+		dli.setNextNextTime(nextNext);
 
 		return dli;
 	}
@@ -125,42 +139,52 @@ public class DepartureListAdapter extends BaseAdapter
 			mDestination.setText(destination);
 		}
 
-		public void setTime(GregorianCalendar time)
+		public void setNextTime(String time)
 		{
-			String s = mkTimeString(time);
-			mTime.setText(s);
+			mTime.setText(time);
 		}
 
-		public void setTimeNext(GregorianCalendar time)
+		public void setNextNextTime(String time)
 		{
-			String s = mkTimeString(time);
-			mTimeNext.setText("(" + s + ")");
+			mTimeNext.setText(time);
 		}
 
 		public void setTrafficIsland(String island)
 		{
 			mTrafficIsland.setText(island);
 		}
+	}
 
-		private String mkTimeString(GregorianCalendar time)
+	private String mkTimeString(GregorianCalendar time)
+	{
+		GregorianCalendar now = new GregorianCalendar();
+		long diff = time.getTimeInMillis() - now.getTimeInMillis();
+
+		long hours = (diff / (1000 * 60 * 60));
+		long minutes = (diff / (1000 * 60)) % 60;
+		long seconds = (diff / 1000) % 60;
+
+		String s;
+
+		if (hours <= 0 && minutes <= 0)
 		{
-			GregorianCalendar now = new GregorianCalendar();
-			long diff = time.getTimeInMillis() - now.getTimeInMillis();
-
-			long hours = (diff / (1000 * 60 * 60)), minutes = (diff / (1000 * 60)) % 60, seconds = (diff / 1000) % 60;
-
-			String s = "";
-
-			if (hours > 0)
-				s += hours + "h";
-			if (minutes > 0 && seconds >= 30)
-				s += (minutes + 1) + "m";
-			else if (minutes > 0)
-				s += minutes + "m";
-			if (seconds <= 0)
-				s = "nu";
-
-			return s;
+			if (seconds > 0)
+    			s = "<1m";
+    		else
+    			s = "nu";
 		}
+		else
+		{
+			s = "";
+			
+			if (hours > 0)
+    			s += hours + "h";
+    		if (minutes > 0 && seconds >= 30)
+    			s += (minutes + 1) + "m";
+    		else if (minutes > 0)
+    			s += minutes + "m";
+		}
+		
+		return s;
 	}
 }

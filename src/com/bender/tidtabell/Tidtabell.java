@@ -25,7 +25,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
@@ -94,6 +93,9 @@ public class Tidtabell extends ListActivity
 	protected void onResume()
 	{
 		super.onResume();
+		mLocationManager.requestLocationUpdates(
+		        LocationManager.GPS_PROVIDER, 0, 0,
+		        mListAdapter.mLocationListener);
 		mLocationManager.requestLocationUpdates(
 		        LocationManager.NETWORK_PROVIDER, 0, 0,
 		        mListAdapter.mLocationListener);

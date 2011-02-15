@@ -1,8 +1,6 @@
 package com.bender.tidtabell;
 
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,24 +53,21 @@ public class NextTripHandler extends DefaultHandler
 			currentDeparture.setLineBackgroundColor(background);
 
 			// Set next departure time
-			String next = attributes.getValue("next_trip_forecast_time");
-			// Check that timeString has the right format
-			Matcher m1 = TIME_PATTERN.matcher(next);
-			if (next == null || !m1.matches())
+			String nf = attributes.getValue("next_trip_forecast_time");
+			String nnf = attributes.getValue("next_next_trip_forecast_time");
+			String np = attributes.getValue("next_trip_planned_time");
+			String nnp = attributes.getValue("next_next_trip_planned_time");
+			
+			Matcher m = TIME_PATTERN.matcher(nf);
+			if (!m.matches())
 			{
 				parseError = true;
 				return;
 			}
-			currentDeparture.setTime(parseTime(next));
-			
-			// next next trip
-			String nextNext = attributes.getValue("next_next_trip_forecast_time");
-			if (nextNext != null)
-			{
-				Matcher m2 = TIME_PATTERN.matcher(nextNext);
-				if (m2.matches())
-					currentDeparture.SetTimeNext(parseTime(nextNext));
-			}
+			currentDeparture.setNextForecast(nf);
+			currentDeparture.setNextNextForecast(nnf);
+			currentDeparture.setNextPlanned(np);
+			currentDeparture.setNextNextPlanned(nnp);
 
 			// Traffic island
 			String island = attributes.getValue("traffic_island");
@@ -115,34 +110,5 @@ public class NextTripHandler extends DefaultHandler
 	public Departure[] getDepartureList()
 	{
 		return departureList.toArray(new Departure[departureList.size()]);
-	}
-
-	private GregorianCalendar parseTime(String s)
-	{
-		int[] time = new int[6];
-
-		// year
-		time[0] = Integer.parseInt(s.substring(0, 4));
-
-		// month
-		time[1] = Integer.parseInt(s.substring(5, 7));
-
-		// day
-		time[2] = Integer.parseInt(s.substring(8, 10));
-
-		// hours
-		time[3] = Integer.parseInt(s.substring(11, 13));
-
-		// minutes
-		time[4] = Integer.parseInt(s.substring(14, 16));
-
-		// seconds
-		time[5] = Integer.parseInt(s.substring(17, 19));
-
-		GregorianCalendar date = new GregorianCalendar(
-		        TimeZone.getTimeZone("Europe/Stockholm"));
-		date.set(time[0], time[1] - 1, time[2], time[3], time[4], time[5]);
-
-		return date;
 	}
 }

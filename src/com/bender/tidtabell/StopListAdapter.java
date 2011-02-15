@@ -188,7 +188,7 @@ public class StopListAdapter extends BaseAdapter
 				        mMagnValues);
 				
 				// Don't want the needle to flip when the device is held upright
-				Matrix.rotateM(mR, 0, -25, 1, 0, 0);
+				Matrix.rotateM(mR, 0, -20, 1, 0, 0);
 				SensorManager.getOrientation(mR, mValues);
 				mHeading = (int) ((mValues[0] / Math.PI) * 180);
 

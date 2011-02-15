@@ -21,7 +21,7 @@ public class StopSearchHandler extends DefaultHandler
 	        RT90_Y = "rt90_y";
 
 	private boolean mParseFail = false;
-	private boolean mInSuggestions = false, mInItems = false, mInItem = false,
+	private boolean mInItems = false, mInItem = false,
 	        mInStopName = false, mInFriendlyName = false, mInCounty = false;
 
 	private ArrayList<Stop> mStops = new ArrayList<Stop>();
