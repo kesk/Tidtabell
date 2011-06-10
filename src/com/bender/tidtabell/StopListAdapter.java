@@ -10,6 +10,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +22,7 @@ public class StopListAdapter extends BaseAdapter
 {
 	Context mContext;
 	Stop[] mStops;
-	float mHeading = 0;
+	volatile float mAzimuth = 0;
 	int mOrientation;
 	Location mLocation;
 
@@ -115,9 +116,9 @@ public class StopListAdapter extends BaseAdapter
 					needle.setActive(true);
 				// Set direction of needle
 				float deg = mLocation.bearingTo(stopLoc);
-				needle.setRotation(mHeading - deg);
+				needle.setRotation(mAzimuth - deg);
 
-				// Set distance in meters
+				// Set distance
 				float m = mLocation.distanceTo(stopLoc);
 				String s;
 				if (m > 500)
@@ -164,39 +165,43 @@ public class StopListAdapter extends BaseAdapter
 		}
 	};
 
-	public final SensorEventListener mSensorEventListener = new SensorEventListener() {
+	public final SensorEventListener mSensorListener = new SensorEventListener() {
 
-		private float[] mAccelValues;
-		private float[] mMagnValues;
-		private float[] mR = new float[16];
-		private float[] mValues = new float[3];
+		private float[] accelValues;
+		private float[] magnValues;
 
 		@Override
 		public void onSensorChanged(SensorEvent event)
 		{
-			switch (event.sensor.getType())
+			if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+				accelValues = event.values;
+			if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+				magnValues = event.values;
+			if (accelValues != null && magnValues != null)
 			{
-			case Sensor.TYPE_ACCELEROMETER:
-				mAccelValues = event.values;
-			case Sensor.TYPE_MAGNETIC_FIELD:
-				mMagnValues = event.values;
-			default:
-				if (mAccelValues == null || mMagnValues == null)
-					break;
+				float[] R = new float[9];
+				boolean success = SensorManager.getRotationMatrix(R, null,
+				        accelValues, magnValues);
 				
-				SensorManager.getRotationMatrix(mR, null, mAccelValues,
-				        mMagnValues);
-				
-				// Don't want the needle to flip when the device is held upright
-				Matrix.rotateM(mR, 0, -20, 1, 0, 0);
-				SensorManager.getOrientation(mR, mValues);
-				mHeading = (int) ((mValues[0] / Math.PI) * 180);
-
-				// Compensate for when the device is in landscape mode
-				if (mOrientation == Configuration.ORIENTATION_LANDSCAPE)
-					mHeading -= 90;
-				
-				StopListAdapter.this.notifyDataSetChanged();
+				if (success)
+				{
+					// Don't want the needle to flip when the device is held
+					// upright
+					// TODO: seems to make the needle very nervous
+					//Matrix.rotateM(R, 0, -20, 1, 0, 0);
+					
+					float[] orientation = new float[3];
+					SensorManager.getOrientation(R, orientation);
+					
+					// direction of the device in degrees from north
+					mAzimuth = (int) (orientation[0] * 180/Math.PI);
+    
+    				// Compensate for when the device is in landscape mode
+    				if (mOrientation == Configuration.ORIENTATION_LANDSCAPE)
+    					mAzimuth -= 90;
+    				
+    				StopListAdapter.this.notifyDataSetChanged();
+				}
 			}
 		}
 

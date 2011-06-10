@@ -16,11 +16,13 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.method.HideReturnsTransformationMethod;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -38,11 +40,10 @@ public class NextTrip extends ListActivity
 	private Stop mStop;
 	private Departure[] mDepartures = new Departure[0];
 	private QueryRunner mQueryRunner;
-	private final PeriodicUpdates mPeriodicUpdates = new PeriodicUpdates();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
-	{
+	{ 
 		super.onCreate(savedInstanceState);
 		setTitle(R.string.title_next_trip);
 		setContentView(R.layout.next_trip);
@@ -68,28 +69,16 @@ public class NextTrip extends ListActivity
 				mQueryRunner.msgHandler = mMsgHandler;
 				break;
 			case FINISHED:
-				NextTripHandler h = (NextTripHandler) mQueryRunner.getResult();
-				mDepartures = h.getDepartureList();
+				updateListView();
 				break;
 			default:
 				break;
 			}
 		}
-		// If this is a restored activity show departures saved from that
-		// instance.
-		else if (savedInstanceState != null)
-		{
-			mDepartures = (Departure[]) savedInstanceState
-			        .getSerializable("departures");
-		}
-		// Otherwise this is a new activity
 		else
 		{
 			runQuery();
 		}
-
-		mListAdapter = new DepartureListAdapter(this, mDepartures);
-		setListAdapter(mListAdapter);
 
 		// Set the name of the stop at the top
 		TextView tv = (TextView) findViewById(R.id.stop_name);
@@ -99,7 +88,7 @@ public class NextTrip extends ListActivity
 		mFavToggle = (ToggleButton) findViewById(R.id.favorite_button);
 		mDbCursor = mDb.getFavorite(mStop.getId());
 
-		// If this station is a favorite set star to checked
+		// If this stop is a favorite set star to checked
 		mFavToggle.setChecked(mDbCursor.moveToFirst());
 
 		// Click listener for favorite toggle
@@ -132,18 +121,12 @@ public class NextTrip extends ListActivity
 		super.onResume();
 		mDbCursor.requery();
 		mFavToggle.setChecked(mDbCursor.moveToFirst());
-		
-		//Start the periodic updater
-		new Thread(mPeriodicUpdates).start();
 	}
 
 	@Override
 	protected void onPause()
 	{
 		mDbCursor.deactivate();
-		
-		// Stop periodic updates
-		mPeriodicUpdates.stopThread = true;
 		super.onPause();
 	}
 
@@ -248,9 +231,7 @@ public class NextTrip extends ListActivity
 			{
 			case QueryRunner.MSG_COMPLETE:
 				dismissDialog(DIALOG_PROGRESS);
-				NextTripHandler h = (NextTripHandler) mQueryRunner.getResult();
-				mDepartures = h.getDepartureList();
-				mListAdapter.updateData(mDepartures);
+				updateListView();
 				break;
 			default:
 				dismissDialog(DIALOG_PROGRESS);
@@ -261,29 +242,8 @@ public class NextTrip extends ListActivity
 			}
 		}
 	};
-	
-	// Periodic updates of the list
-	private class PeriodicUpdates implements Runnable
-	{
-		volatile boolean stopThread = false;
-		
-		@Override
-		public void run()
-		{
-			while (!stopThread)
-			{
-				try
-				{
-					Thread.sleep(20 * 1000);
-					mListAdapter.notifyDataSetChanged();
-				}
-				catch (InterruptedException e)
-				{
-				}
-			}
-		}
-	}
 
+	// Start a Query to retrieve departures from Västtrafik
 	private void runQuery()
 	{
 		String url = NEXT_TRIP_URL + "&stopId=" + mStop.getId();
@@ -291,6 +251,25 @@ public class NextTrip extends ListActivity
 		showDialog(DIALOG_PROGRESS, null);
 		mQueryRunner = new QueryRunner(new NextTripHandler(), mMsgHandler, url);
 		new Thread(mQueryRunner).start();
+	}
+	
+	private void updateListView()
+	{
+		NextTripHandler h = (NextTripHandler) mQueryRunner.getResult();
+		mDepartures = h.getDepartureList();
+		mListAdapter = new DepartureListAdapter(this, mDepartures);
+		mListAdapter.updateData(mDepartures);
+
+		String[] freeText = h.getFreeText();
+		for (String s : freeText)
+		{
+			TextView tv = new TextView(NextTrip.this);
+			tv.setPadding(5, 5, 0, 5);
+			tv.setText(s);
+			ListView lv = NextTrip.this.getListView();
+			lv.addHeaderView(tv);
+		}
+		NextTrip.this.setListAdapter(mListAdapter);
 	}
 
 	private void saveToFile(String s)

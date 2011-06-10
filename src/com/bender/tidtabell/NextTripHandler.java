@@ -13,6 +13,8 @@ public class NextTripHandler extends DefaultHandler
 	boolean inForecast = false;
 	boolean inItem = false;
 	boolean inDestination = false;
+	boolean inFreeText = false;
+	boolean inText = false;
 
 	boolean parseError = false;
 
@@ -21,6 +23,7 @@ public class NextTripHandler extends DefaultHandler
 
 	private Departure currentDeparture;
 	private ArrayList<Departure> departureList = new ArrayList<Departure>();
+	private ArrayList<String> freeText = new ArrayList<String>();
 
 	@Override
 	public void startElement(String uri, String localName, String qName,
@@ -57,7 +60,7 @@ public class NextTripHandler extends DefaultHandler
 			String nnf = attributes.getValue("next_next_trip_forecast_time");
 			String np = attributes.getValue("next_trip_planned_time");
 			String nnp = attributes.getValue("next_next_trip_planned_time");
-			
+
 			Matcher m = TIME_PATTERN.matcher(nf);
 			if (!m.matches())
 			{
@@ -77,6 +80,13 @@ public class NextTripHandler extends DefaultHandler
 		else if (inForecast && inItem && !inDestination
 		        && qName.equalsIgnoreCase("destination"))
 			inDestination = true;
+		// <free_text>
+		else if (!inFreeText && qName.equalsIgnoreCase("free_text"))
+			inFreeText = true;
+		else if (inFreeText && !inItem && qName.equalsIgnoreCase("item"))
+			inItem = true;
+		else if (inFreeText && inItem && !inText && qName.equalsIgnoreCase("text"))
+			inText = true;
 	}
 
 	@Override
@@ -85,15 +95,17 @@ public class NextTripHandler extends DefaultHandler
 	{
 		if (inForecast && inItem && inDestination)
 			currentDeparture.setDestination(new String(ch, start, length));
+		else if (inFreeText && inItem && inText)
+			freeText.add(new String(ch, start, length));
 	}
 
 	@Override
 	public void endElement(String uri, String localName, String qName)
 	        throws SAXException
 	{
-		if (qName.equalsIgnoreCase("forecast"))
+		if (inForecast && qName.equalsIgnoreCase("forecast"))
 			inForecast = false;
-		else if (qName.equalsIgnoreCase("item"))
+		else if (inForecast && inItem && qName.equalsIgnoreCase("item"))
 		{
 			inItem = false;
 
@@ -103,12 +115,24 @@ public class NextTripHandler extends DefaultHandler
 
 			currentDeparture = null;
 		}
-		else if (qName.equalsIgnoreCase("destination"))
+		else if (inForecast && inItem && inDestination
+		        && qName.equalsIgnoreCase("destination"))
 			inDestination = false;
+		else if (inFreeText && qName.equalsIgnoreCase("free_text"))
+			inFreeText = false;
+		else if (inFreeText && inItem && qName.equalsIgnoreCase("item"))
+			inItem = false;
+		else if (inFreeText && inItem && inText && qName.equalsIgnoreCase("text"))
+			inText = false;
 	}
 
 	public Departure[] getDepartureList()
 	{
 		return departureList.toArray(new Departure[departureList.size()]);
+	}
+	
+	public String[] getFreeText()
+	{
+		return freeText.toArray(new String[freeText.size()]);
 	}
 }

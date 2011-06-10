@@ -99,17 +99,17 @@ public class Tidtabell extends ListActivity
 		mLocationManager.requestLocationUpdates(
 		        LocationManager.NETWORK_PROVIDER, 0, 0,
 		        mListAdapter.mLocationListener);
-		mSensorManager.registerListener(mListAdapter.mSensorEventListener,
-		        mAccelSensor, SensorManager.SENSOR_DELAY_UI);
-		mSensorManager.registerListener(mListAdapter.mSensorEventListener,
-		        mMagnSensor, SensorManager.SENSOR_DELAY_UI);
+		mSensorManager.registerListener(mListAdapter.mSensorListener,
+		        mAccelSensor, SensorManager.SENSOR_DELAY_GAME);
+		mSensorManager.registerListener(mListAdapter.mSensorListener,
+		        mMagnSensor, SensorManager.SENSOR_DELAY_GAME);
 	}
 
 	@Override
 	protected void onPause()
 	{
 		mLocationManager.removeUpdates(mListAdapter.mLocationListener);
-		mSensorManager.unregisterListener(mListAdapter.mSensorEventListener);
+		mSensorManager.unregisterListener(mListAdapter.mSensorListener);
 		super.onPause();
 	}
 

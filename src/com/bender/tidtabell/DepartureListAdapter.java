@@ -22,6 +22,12 @@ public class DepartureListAdapter extends BaseAdapter
 		mContext = context;
 		mDepartures = departures;
 	}
+	
+	public DepartureListAdapter(Context context)
+	{
+		mContext = context;
+		mDepartures = new Departure[0];
+	}
 
 	@Override
 	public int getCount()
@@ -109,14 +115,22 @@ public class DepartureListAdapter extends BaseAdapter
 
 		public void setLine(String line)
 		{
+			mLine.setTextScaleX(1.0f);
 			if (line.matches("[0-9][0-9]?"))
 				mLine.setTextSize(TypedValue.COMPLEX_UNIT_PT, 20);
 			else if (line.matches("[0-9]{3}"))
 				mLine.setTextSize(TypedValue.COMPLEX_UNIT_PT, 15);
+			else if (line.length() < 5)
+			{
+				mLine.setTextSize(TypedValue.COMPLEX_UNIT_PT, 15);
+				mLine.setTextScaleX(0.6f);
+				line = line.toUpperCase();
+			}
 			else
 			{
-				mLine.setTextSize(TypedValue.COMPLEX_UNIT_PT, 6);
-				line = line.toUpperCase();
+				mLine.setTextSize(TypedValue.COMPLEX_UNIT_PT, 15);
+				mLine.setTextScaleX(0.4f);
+				line = line.toUpperCase();				
 			}
 
 			mLine.setText(line);

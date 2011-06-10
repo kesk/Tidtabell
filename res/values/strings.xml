@@ -11,7 +11,7 @@
 <string name="remove_favorite_toast">Hållplatsen har tagits bort som favorit.</string>
 <string name="menu_home">Hem</string>
 <string name="menu_refresh">Uppdatera</string>
-<string name="menu_proximity_search">Sök närliggande hållplatser</string>
+<string name="menu_proximity_search">Närmaste hållplatser</string>
 <string name="title_next_trip">Nästa tur</string>
 <string name="title_closest_stops">Närmaste hållplatserna</string>
 <string name="error_margin">Felmarginal:</string>

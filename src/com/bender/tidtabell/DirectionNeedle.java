@@ -55,7 +55,7 @@ public class DirectionNeedle extends View
         canvas.translate(x, y);
         
         // Scale it down
-        canvas.scale(0.4f, 0.4f);
+        canvas.scale(0.6f, 0.6f);
         
         canvas.rotate(-mRotation);
         

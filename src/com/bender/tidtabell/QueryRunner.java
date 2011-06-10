@@ -1,6 +1,10 @@
 package com.bender.tidtabell;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -15,6 +19,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 public class QueryRunner implements Runnable
 {
@@ -117,5 +122,23 @@ public class QueryRunner implements Runnable
 	public void stopThread()
 	{
 		mStopThread = true;
+	}
+	
+	private InputSource debugXml()
+	{
+		FileInputStream f;
+		InputSource is = null;
+		
+        try
+        {
+	        f = new FileInputStream("/sdcard/debug_xml.xml");
+			is  = new InputSource(f);
+        }
+        catch (FileNotFoundException e)
+        {
+	        Log.d("Tidtabell", "debugXml: file not found.");
+        }
+        
+        return is;
 	}
 }

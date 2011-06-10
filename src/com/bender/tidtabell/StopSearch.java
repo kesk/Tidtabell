@@ -170,10 +170,10 @@ public class StopSearch extends ListActivity
 		mLocationManager.requestLocationUpdates(
 		        LocationManager.NETWORK_PROVIDER, 0, 0,
 		        mListAdapter.mLocationListener);
-		mSensorManager.registerListener(mListAdapter.mSensorEventListener,
-		        mAccelSensor, SensorManager.SENSOR_DELAY_UI);
-		mSensorManager.registerListener(mListAdapter.mSensorEventListener,
-		        mMagnSensor, SensorManager.SENSOR_DELAY_UI);
+		mSensorManager.registerListener(mListAdapter.mSensorListener,
+		        mAccelSensor, SensorManager.SENSOR_DELAY_GAME);
+		mSensorManager.registerListener(mListAdapter.mSensorListener,
+		        mMagnSensor, SensorManager.SENSOR_DELAY_GAME);
 
 		// Proximity search
 		if (mProximitySearch)
@@ -190,7 +190,7 @@ public class StopSearch extends ListActivity
 	public void onPause()
 	{
 		mLocationManager.removeUpdates(mListAdapter.mLocationListener);
-		mSensorManager.unregisterListener(mListAdapter.mSensorEventListener);
+		mSensorManager.unregisterListener(mListAdapter.mSensorListener);
 
 		if (mProximitySearch)
 			mLocationManager.removeUpdates(mLocationListener);

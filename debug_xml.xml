@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<root>
+  <forecast>
+    <items>
+      <item line_id="11"
+        line_image="http://vasttrafik.se/CustomerTemplates/Public/Images/sparvagn.gif"
+        line_image_alternate_text="Spårvagn" vehicle_type_id="2"
+        vehicle_type_code="Tram" line_number="11"
+        line_number_foreground_color="#FFFFFF"
+        line_number_background_color="#000000" next_trip="7"
+        next_trip_image="http://vasttrafik.se/CustomerTemplates/Public/Images/hcp12.jpg"
+        next_trip_alternate_text="Handikappanpassad"
+        next_trip_image_code="R" next_next_trip="" next_next_trip_image=""
+        next_next_trip_alternate_text="" next_next_trip_image_code=""
+        next_quality="1" next_next_quality="0" next_trip_planned_time="2011-02-17T02:10:00"
+        next_next_trip_planned_time="0001-01-01T00:00:00"
+        next_trip_forecast_time="2011-02-17T02:13:05"
+        next_next_trip_forecast_time="0001-01-01T00:00:00"
+        next_creation_time="2011-02-17T02:05:48.9682247"
+        next_next_creation_time="2011-02-17T02:05:48.9682247" trip_id="4438"
+        via="Ekedal" traffic_island="D">
+        <destination><![CDATA[Vagnhallen Majorna]]></destination>
+      </item>
+    </items>
+  </forecast>
+  <free_text>
+    <items>
+      <item>
+        <text><![CDATA[På grund av ett spårarbete vid Olivedalsgatan mellan klockan 01:00-04:00 kör linje 1 via Ekedal och Stigbergstorget i både riktningar. Buss ersätter linje 6 mellan Sahlgrenska Huvudentré och Järntorget.]]></text>
+      </item>
+    </items>
+  </free_text>
+</root>
